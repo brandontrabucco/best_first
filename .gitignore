@@ -1,0 +1,4 @@
+*.pyc
+.idea/
+events.out.tfevents.**
+*.egg-info/
