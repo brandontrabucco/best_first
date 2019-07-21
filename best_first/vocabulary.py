@@ -39,6 +39,9 @@ class Vocabulary(object):
         self.words_to_ids_hash = words_to_ids_hash
         self.ids_to_words_hash = ids_to_words_hash
 
+    def size(self):
+        return self.words_to_ids_hash.size()
+
     def words_to_ids(
             self,
             keys

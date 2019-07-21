@@ -19,9 +19,10 @@ max_caption_length = 13
 image_height = 299
 image_width = 299
 
-batch_size = 32
+batch_size = 1024
 num_epochs = 10
 queue_size = 5096
+logging_delay = 10
 
 parts_of_speech = [
     "<pad>",
