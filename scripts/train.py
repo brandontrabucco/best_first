@@ -3,6 +3,7 @@
 
 import best_first.config as args
 import tensorflow as tf
+from tensorboard import program
 import time
 from best_first.data_loader import data_loader
 from best_first import load_vocabulary
@@ -32,6 +33,11 @@ if __name__ == "__main__":
         pointer_layer.trainable_variables +
         tag_layer.trainable_variables +
         word_layer.trainable_variables)
+
+    writer = tf.summary.create_file_writer(args.logging_dir)
+    tb = program.TensorBoard()
+    tb.configure(argv=[None, '--logdir', args.logging_dir])
+    tb.launch()
 
     start_time = time.time()
     for iteration, batch in enumerate(data_loader()):
@@ -72,10 +78,15 @@ if __name__ == "__main__":
             return tf.reduce_mean(pointer_loss + tag_loss + word_loss)
 
         optimizer.minimize(loss_function, trainable_variables)
+
         if (iteration + 1) % args.logging_delay == 0:
             end_time = time.time()
-            print("[{:0.7f} img/sec]  Iteration: {}  Loss: {}".format(
-                args.logging_delay * args.batch_size / (end_time - start_time),
-                iteration,
-                loss_function()))
+            tf.summary.experimental.set_step(iteration)
+            tf.summary.scalar(
+                "Images Per Second",
+                args.logging_delay * args.batch_size / (end_time - start_time))
+            tf.summary.scalar(
+                "Loss",
+                loss_function())
             start_time = end_time
+

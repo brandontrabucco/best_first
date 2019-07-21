@@ -24,6 +24,8 @@ num_epochs = 10
 queue_size = 5096
 logging_delay = 10
 
+logging_dir = "./"
+
 parts_of_speech = [
     "<pad>",
     "<unk>",
