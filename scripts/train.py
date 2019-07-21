@@ -81,12 +81,10 @@ if __name__ == "__main__":
 
         if (iteration + 1) % args.logging_delay == 0:
             end_time = time.time()
-            tf.summary.experimental.set_step(iteration)
-            tf.summary.scalar(
-                "Images Per Second",
-                args.logging_delay * args.batch_size / (end_time - start_time))
-            tf.summary.scalar(
-                "Loss",
-                loss_function())
+            duration = end_time - start_time
             start_time = end_time
+            with writer.as_default():
+                tf.summary.experimental.set_step(iteration)
+                tf.summary.scalar("Images Per Second", args.logging_delay * args.batch_size / duration)
+                tf.summary.scalar("Loss", loss_function())
 
