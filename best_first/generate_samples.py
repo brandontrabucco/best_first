@@ -9,7 +9,7 @@ BestFirstSample = namedtuple("BestFirstSample", [
     "words", "tags", "new_word", "new_tag", "slot"])
 
 
-def recovery_samples_recursive(
+def generate_samples_recursive(
         existing_word_ids,
         existing_tag_ids,
         candidate_word_ids,
@@ -48,9 +48,9 @@ def recovery_samples_recursive(
                     tags=([1] + new_existing_tag_ids.tolist() + [1]),
                     new_word=best_word_id,
                     new_tag=best_tag_id,
-                    slot=(1 + best_slot)))
+                    slot=best_slot))
             samples.extend(
-                recovery_samples_recursive(
+                generate_samples_recursive(
                     new_existing_word_ids,
                     new_existing_tag_ids,
                     new_candidate_word_ids,
@@ -62,13 +62,13 @@ def recovery_samples_recursive(
     return samples
 
 
-def recovery_samples(
+def generate_samples(
         existing_word_ids,
         existing_tag_ids,
         word_ids_weight,
         tag_ids_weight
 ):
-    samples = recovery_samples_recursive(
+    samples = generate_samples_recursive(
         existing_word_ids,
         existing_tag_ids,
         np.zeros([], dtype=np.int32),

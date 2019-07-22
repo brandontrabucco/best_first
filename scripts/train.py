@@ -8,7 +8,7 @@ import time
 from best_first.data_loader import data_loader
 from best_first import load_vocabulary
 from best_first import load_parts_of_speech
-from best_first.nets.transformer import Transformer
+from best_first.best_first_decoder import BestFirstDecoder
 
 
 if __name__ == "__main__":
@@ -16,31 +16,22 @@ if __name__ == "__main__":
     vocab = load_vocabulary()
     parts_of_speech = load_parts_of_speech()
 
-    word_embedding_layer = tf.keras.layers.Embedding(vocab.size().numpy(), 1024)
-    tag_embedding_layer = tf.keras.layers.Embedding(parts_of_speech.size().numpy(), 1024)
-
-    model = Transformer(8, 32, 512, 3, 256, 1024)
-
-    pointer_layer = tf.keras.layers.Dense(1)
-    tag_layer = tf.keras.layers.Dense(parts_of_speech.size().numpy())
-    word_layer = tf.keras.layers.Dense(vocab.size().numpy())
+    decoder = BestFirstDecoder(
+        vocab.size().numpy(), 1024,
+        parts_of_speech.size().numpy(), 1024,
+        8, 32, 512, 3, 256, 1024)
 
     optimizer = tf.keras.optimizers.Adam()
-    trainable_variables = (
-        model.trainable_variables +
-        word_embedding_layer.trainable_variables +
-        tag_embedding_layer.trainable_variables +
-        pointer_layer.trainable_variables +
-        tag_layer.trainable_variables +
-        word_layer.trainable_variables)
 
     writer = tf.summary.create_file_writer(args.logging_dir)
     tb = program.TensorBoard()
     tb.configure(argv=[None, '--logdir', args.logging_dir])
-    tb.launch()
+    print("Launching tensorboard at {}".format(tb.launch()))
 
-    start_time = time.time()
     for iteration, batch in enumerate(data_loader()):
+        break
+
+    for iteration in range(1000):
 
         image_path = batch["image_path"]
         image = batch["image"]
@@ -51,40 +42,44 @@ if __name__ == "__main__":
         tags = batch["tags"]
         indicators = batch["indicators"]
 
+        with writer.as_default():
+            tf.summary.experimental.set_step(iteration)
+            tf.summary.text("image_path", image_path[0])
+            tf.summary.text("new_word", vocab.ids_to_words(new_word[0]))
+            tf.summary.text("new_tag", parts_of_speech.ids_to_words(new_tag[0]))
+            tf.summary.text("slot", tf.as_string(slot[0]))
+            tf.summary.text("words", tf.strings.reduce_join(
+                vocab.ids_to_words(words[0, :]), separator=" "))
+            tf.summary.text("tags", tf.strings.reduce_join(
+                parts_of_speech.ids_to_words(tags[0, :]), separator=" "))
+
         def loss_function():
+            start_time = time.time()
+            pointer_logits, tag_logits, word_logits = decoder([
+                image, words, indicators, slot, new_tag])
 
-            word_embeddings = word_embedding_layer(words)
-            hidden_activations = model([image, word_embeddings, indicators])
-            pointer_logits = tf.squeeze(pointer_layer(hidden_activations), 2)
+            pointer_loss = tf.reduce_mean(
+                tf.losses.sparse_categorical_crossentropy(
+                    slot,
+                    pointer_logits))
+            tag_loss = tf.reduce_mean(
+                tf.losses.sparse_categorical_crossentropy(
+                    new_tag,
+                    tag_logits))
+            word_loss = tf.reduce_mean(
+                tf.losses.sparse_categorical_crossentropy(
+                    new_word,
+                    word_logits))
+            total_loss = pointer_loss + tag_loss + word_loss
 
-            selected_hidden_activations = tf.squeeze(tf.gather(
-                hidden_activations, tf.expand_dims(slot, 1), batch_dims=1), 1)
-            tag_logits = tag_layer(selected_hidden_activations)
-
-            tag_embeddings = tag_embedding_layer(new_tag)
-            context_vector = tf.concat([selected_hidden_activations, tag_embeddings], 1)
-            word_logits = word_layer(context_vector)
-
-            pointer_loss = tf.losses.sparse_categorical_crossentropy(
-                slot,
-                pointer_logits)
-            tag_loss = tf.losses.sparse_categorical_crossentropy(
-                new_tag,
-                tag_logits)
-            word_loss = tf.losses.sparse_categorical_crossentropy(
-                new_word,
-                word_logits)
-
-            return tf.reduce_mean(pointer_loss + tag_loss + word_loss)
-
-        optimizer.minimize(loss_function, trainable_variables)
-
-        if (iteration + 1) % args.logging_delay == 0:
-            end_time = time.time()
-            duration = end_time - start_time
-            start_time = end_time
             with writer.as_default():
-                tf.summary.experimental.set_step(iteration)
-                tf.summary.scalar("Images Per Second", args.logging_delay * args.batch_size / duration)
-                tf.summary.scalar("Loss", loss_function())
+                tf.summary.scalar("Pointer Loss", pointer_loss)
+                tf.summary.scalar("Tag Loss", tag_loss)
+                tf.summary.scalar("Word Loss", word_loss)
+                tf.summary.scalar("Total Loss", total_loss)
+                tf.summary.scalar(
+                    "Images Per Second", args.batch_size / (time.time() - start_time))
 
+            return total_loss
+
+        optimizer.minimize(loss_function, decoder.trainable_variables)

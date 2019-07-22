@@ -9,7 +9,7 @@ import os
 from collections import defaultdict
 from best_first import load_tagger, load_parts_of_speech
 from best_first.vocabulary import Vocabulary
-from best_first.recovery_samples import recovery_samples
+from best_first.generate_samples import generate_samples
 
 
 def process_captions():
@@ -59,7 +59,7 @@ def process_captions():
             word_ids = vocab.words_to_ids(tf.constant(words[i])).numpy()
             tag_ids = parts_of_speech.words_to_ids(tf.constant(tags[i])).numpy()
             samples.extend(
-                recovery_samples(
+                generate_samples(
                     word_ids,
                     tag_ids,
                     (1.0 / len(reverse_vocab)),
