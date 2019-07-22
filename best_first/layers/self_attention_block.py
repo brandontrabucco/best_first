@@ -39,6 +39,7 @@ class SelfAttentionBlock(tf.keras.layers.Layer):
     def call(
             self,
             inputs,
+            training=True,
             **kwargs
     ):
         sequence, *rest = inputs
@@ -49,17 +50,15 @@ class SelfAttentionBlock(tf.keras.layers.Layer):
             indicators = tf.ones(tf.shape(sequence)[:2])
 
         for x in range(self.num_layers):
-
-            sequence = self.attention_norms[x](
-                sequence + self.attention_dropouts[x](self.attention_layers[x]([
+            sequence = self.attention_norms[x](sequence + self.attention_dropouts[x](self.attention_layers[x]([
                     sequence,
                     sequence,
                     sequence,
                     indicators,
                     indicators,
-                    indicators])))
+                    indicators])), training=training)
             sequence = self.dense_norms[x](
                 sequence + self.dense_output_layers[x](
-                    tf.nn.relu(self.dense_hidden_layers[x](sequence))))
+                    tf.nn.relu(self.dense_hidden_layers[x](sequence))), training=training)
 
         return sequence

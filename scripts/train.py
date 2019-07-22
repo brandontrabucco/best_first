@@ -10,7 +10,6 @@ from best_first import load_model
 
 
 if __name__ == "__main__":
-
     vocab, parts_of_speech, decoder = load_model()
     optimizer = tf.keras.optimizers.Adam(lr=args.learning_rate)
 
@@ -20,9 +19,8 @@ if __name__ == "__main__":
     print("Launching tensorboard at {}".format(tb.launch()))
 
     for iteration, batch in enumerate(data_loader()):
-        break
+        start_time = time.time()
 
-    for iteration in range(1000):
         image_path = batch["image_path"]
         image = batch["image"]
         new_word = batch["new_word"]
@@ -44,7 +42,6 @@ if __name__ == "__main__":
                 tags[0, :]), separator=" "))
 
         def loss_function():
-            start_time = time.time()
             pointer_logits, tag_logits, word_logits = decoder([
                 image, words, tf.ones(tf.shape(image)[:2]), indicators, slot, new_tag])
 
@@ -73,9 +70,10 @@ if __name__ == "__main__":
                 tf.summary.scalar("Tag Loss", tag_loss)
                 tf.summary.scalar("Word Loss", word_loss)
                 tf.summary.scalar("Total Loss", total_loss)
-                tf.summary.scalar(
-                    "Images Per Second", args.batch_size / (time.time() - start_time))
 
             return total_loss
 
         optimizer.minimize(loss_function, decoder.trainable_variables)
+        with writer.as_default():
+            tf.summary.scalar("Images Per Second", args.batch_size / (
+                time.time() - start_time))

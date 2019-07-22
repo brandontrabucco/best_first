@@ -45,12 +45,12 @@ image_height = 299
 image_width = 299
 
 
-batch_size = 1024
+batch_size = 256
 num_epochs = 1000
 queue_size = 5096
 
 
-learning_rate = 0.00000001
+learning_rate = 0.0001
 pointer_loss_weight = 1.0
 tag_loss_weight = 0.1
 word_loss_weight = 0.01

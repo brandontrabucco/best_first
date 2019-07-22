@@ -22,13 +22,12 @@ class BestFirstDecoder(tf.keras.Model):
             **kwargs
     ):
         super(BestFirstDecoder, self).__init__(**kwargs)
+        self.hidden_size = hidden_size
 
         self.word_embedding_layer = tf.keras.layers.Embedding(
-            vocab_size,
-            word_embedding_size)
+            vocab_size, word_embedding_size)
         self.tag_embedding_layer = tf.keras.layers.Embedding(
-            parts_of_speech_size,
-            tag_embedding_size)
+            parts_of_speech_size, tag_embedding_size)
 
         self.stem = Transformer(
             num_heads,
@@ -38,16 +37,15 @@ class BestFirstDecoder(tf.keras.Model):
             hidden_size,
             output_size)
 
-        self.pointer_logits_layer = tf.keras.layers.Dense(
-            1, activation=(lambda x: tf.squeeze(x, -1)))
-        self.tag_logits_layer = tf.keras.layers.Dense(
-            parts_of_speech_size)
-        self.word_logits_layer = tf.keras.layers.Dense(
-            vocab_size)
+        self.pointer_logits_layer = tf.keras.layers.Dense(1, activation=(
+            lambda x: tf.squeeze(x, -1)))
+        self.tag_logits_layer = tf.keras.layers.Dense(parts_of_speech_size)
+        self.word_logits_layer = tf.keras.layers.Dense(vocab_size)
 
     def call(
             self,
             inputs,
+            training=True,
             **kwargs
     ):
         image, words, *rest = inputs
@@ -62,9 +60,8 @@ class BestFirstDecoder(tf.keras.Model):
             indicators_words = tf.ones(tf.shape(words))
 
         word_embeddings = self.word_embedding_layer(words)
-
         hidden_activations = self.stem([
-            image, word_embeddings, indicators_image, indicators_words])
+            image, word_embeddings, indicators_image, indicators_words], training=training)
         pointer_logits = self.pointer_logits_layer(hidden_activations)
 
         if len(rest) > 0:

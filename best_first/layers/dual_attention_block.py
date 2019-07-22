@@ -40,6 +40,7 @@ class DualAttentionBlock(tf.keras.layers.Layer):
     def call(
             self,
             inputs,
+            training=True,
             **kwargs
     ):
         sequence_one, sequence_two, *rest = inputs
@@ -51,7 +52,7 @@ class DualAttentionBlock(tf.keras.layers.Layer):
         if len(rest) > 0:
             indicators_two, *rest = rest
         else:
-            indicators_two = tf.ones(tf.shape(sequence_one)[:2])
+            indicators_two = tf.ones(tf.shape(sequence_two)[:2])
 
         for i in range(self.num_layers):
 
@@ -63,10 +64,10 @@ class DualAttentionBlock(tf.keras.layers.Layer):
                     sequence_one,
                     indicators_one,
                     indicators_one,
-                    indicators_one])))
+                    indicators_one])), training=training)
             sequence_one = self.dense_norms[x](
                 sequence_one + self.dense_output_layers[x](
-                    tf.nn.relu(self.dense_hidden_layers[x](sequence_one))))
+                    tf.nn.relu(self.dense_hidden_layers[x](sequence_one))), training=training)
 
             y = i * 2 + 1
             sequence_one = self.attention_norms[y](
@@ -76,9 +77,9 @@ class DualAttentionBlock(tf.keras.layers.Layer):
                     sequence_two,
                     indicators_one,
                     indicators_two,
-                    indicators_two])))
+                    indicators_two])), training=training)
             sequence_one = self.dense_norms[y](
                 sequence_one + self.dense_output_layers[y](
-                    tf.nn.relu(self.dense_hidden_layers[y](sequence_one))))
+                    tf.nn.relu(self.dense_hidden_layers[y](sequence_one))), training=training)
 
         return sequence_one

@@ -16,6 +16,7 @@ class ScaledDotProductAttention(tf.keras.layers.Layer):
         super(ScaledDotProductAttention, self).__init__(**kwargs)
         self.num_heads = num_heads
         self.hidden_size = hidden_size
+        self.output_size = output_size
         self.query_map = tf.keras.layers.Dense(
             hidden_size * num_heads,
             use_bias=False)
