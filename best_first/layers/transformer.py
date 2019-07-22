@@ -50,9 +50,13 @@ class Transformer(tf.keras.layers.Layer):
         sequence_one, sequence_two, *rest = inputs
 
         if len(rest) > 0:
-            indicators, *rest = rest
+            indicators_one, *rest = rest
         else:
-            indicators = tf.ones(tf.shape(sequence_one)[:2])
+            indicators_one = tf.ones(tf.shape(sequence_one)[:2])
+        if len(rest) > 0:
+            indicators_two, *rest = rest
+        else:
+            indicators_two = tf.ones(tf.shape(sequence_one)[:2])
 
         depth_ids = tf.cast(tf.range(self.hidden_size, delta=2), tf.float32)
         sequence_one_ids = tf.cast(tf.range(tf.shape(sequence_one)[1]), tf.float32)
@@ -76,8 +80,8 @@ class Transformer(tf.keras.layers.Layer):
         sequence_one = self.input_one_layer(sequence_one) + positional_embeddings_one
         sequence_two = self.input_two_layer(sequence_two) + positional_embeddings_two
 
-        sequence_one = self.self_attention_block([sequence_one])
+        sequence_one = self.self_attention_block([sequence_one, indicators_one])
         sequence_two = self.dual_attention_block([
-            sequence_two, sequence_one, indicators])
+            sequence_two, sequence_one, indicators_two, indicators_one])
 
         return self.output_layer(sequence_two)

@@ -3,32 +3,16 @@
 
 import best_first.config as args
 import tensorflow as tf
-from tensorboard import program
 import time
+from tensorboard import program
 from best_first.data_loader import data_loader
-from best_first import load_vocabulary
-from best_first import load_parts_of_speech
-from best_first.best_first_decoder import BestFirstDecoder
+from best_first import load_model
 
 
 if __name__ == "__main__":
 
-    vocab = load_vocabulary()
-    parts_of_speech = load_parts_of_speech()
-
-    decoder = BestFirstDecoder(
-        vocab.size().numpy(),
-        args.word_embedding_size,
-        parts_of_speech.size().numpy(),
-        args.tag_embedding_size,
-        args.num_heads,
-        args.attention_hidden_size,
-        args.dense_hidden_size,
-        args.num_layers,
-        args.hidden_size,
-        args.output_size)
-
-    optimizer = tf.keras.optimizers.Adam()
+    vocab, parts_of_speech, decoder = load_model()
+    optimizer = tf.keras.optimizers.Adam(lr=args.learning_rate)
 
     writer = tf.summary.create_file_writer(args.logging_dir)
     tb = program.TensorBoard()
@@ -39,7 +23,6 @@ if __name__ == "__main__":
         break
 
     for iteration in range(1000):
-
         image_path = batch["image_path"]
         image = batch["image"]
         new_word = batch["new_word"]
@@ -55,29 +38,35 @@ if __name__ == "__main__":
             tf.summary.text("new_word", vocab.ids_to_words(new_word[0]))
             tf.summary.text("new_tag", parts_of_speech.ids_to_words(new_tag[0]))
             tf.summary.text("slot", tf.as_string(slot[0]))
-            tf.summary.text("words", tf.strings.reduce_join(
-                vocab.ids_to_words(words[0, :]), separator=" "))
-            tf.summary.text("tags", tf.strings.reduce_join(
-                parts_of_speech.ids_to_words(tags[0, :]), separator=" "))
+            tf.summary.text("words", tf.strings.reduce_join(vocab.ids_to_words(
+                words[0, :]), separator=" "))
+            tf.summary.text("tags", tf.strings.reduce_join(parts_of_speech.ids_to_words(
+                tags[0, :]), separator=" "))
 
         def loss_function():
             start_time = time.time()
             pointer_logits, tag_logits, word_logits = decoder([
-                image, words, indicators, slot, new_tag])
+                image, words, tf.ones(tf.shape(image)[:2]), indicators, slot, new_tag])
 
             pointer_loss = tf.reduce_mean(
                 tf.losses.sparse_categorical_crossentropy(
                     slot,
-                    pointer_logits))
+                    pointer_logits,
+                    from_logits=True))
             tag_loss = tf.reduce_mean(
                 tf.losses.sparse_categorical_crossentropy(
                     new_tag,
-                    tag_logits))
+                    tag_logits,
+                    from_logits=True))
             word_loss = tf.reduce_mean(
                 tf.losses.sparse_categorical_crossentropy(
                     new_word,
-                    word_logits))
-            total_loss = pointer_loss + tag_loss + word_loss
+                    word_logits,
+                    from_logits=True))
+            total_loss = (
+                    args.pointer_loss_weight * pointer_loss +
+                    args.tag_loss_weight * tag_loss +
+                    args.word_loss_weight * word_loss)
 
             with writer.as_default():
                 tf.summary.scalar("Pointer Loss", pointer_loss)

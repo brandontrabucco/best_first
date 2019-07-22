@@ -55,6 +55,8 @@ class SelfAttentionBlock(tf.keras.layers.Layer):
                     sequence,
                     sequence,
                     sequence,
+                    indicators,
+                    indicators,
                     indicators])))
             sequence = self.dense_norms[x](
                 sequence + self.dense_output_layers[x](
