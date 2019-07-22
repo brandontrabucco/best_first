@@ -43,7 +43,7 @@ def process_captions():
     for split, frequency in enumerate(sorted_frequencies):
         if frequency < args.min_word_frequency:
             break
-    reverse_vocab = ("<pad>", "<unk>", "<start>", "<end>") + sorted_words[:split]
+    reverse_vocab = ("<pad>", "<unk>", "<start>", "<end>") + sorted_words[:(split + 1)]
     with tf.io.gfile.GFile(args.vocab_file, "w") as f:
         f.write("\n".join(reverse_vocab))
 

@@ -17,9 +17,9 @@ if __name__ == "__main__":
 
     ckpt = tf.train.Checkpoint(decoder=decoder, optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(
-        ckpt, args.checkpoint_dir, max_to_keep=1)
-    if ckpt_manager.latest_checkpoint:
-        ckpt.restore(ckpt_manager.latest_checkpoint)
+        ckpt, args.checkpoint_dir, max_to_keep=2)
+    ckpt.restore(ckpt_manager.latest_checkpoint)
+    print("Restoring model from {}".format(ckpt_manager.latest_checkpoint))
 
     image = tf.keras.applications.inception_v3.preprocess_input(
         tf.image.resize(
@@ -54,10 +54,15 @@ if __name__ == "__main__":
         pointer_logits, tag_logits, word_logits = decoder([batch_features, words])
         slot = tf.argmax(pointer_logits[0], output_type=tf.int32).numpy()
         new_word = tf.argmax(word_logits[0], output_type=tf.int32).numpy()
+
+        print(vocab.ids_to_words(tf.constant(words)))
+        print(vocab.ids_to_words(tf.constant(new_word)))
+        print(slot)
+
         if slot == tf.size(words[0]).numpy() - 1:
             break
         base_list = words.numpy().tolist()[0]
         words = tf.constant([base_list[:(slot + 1)] + [new_word] + base_list[(slot + 1):]])
 
-    print("Caption: {}".format(tf.strings.reduce_join(
+    print("{}".format(tf.strings.reduce_join(
         vocab.ids_to_words(words[0]), separator=" ").numpy()))

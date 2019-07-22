@@ -17,10 +17,10 @@ if __name__ == "__main__":
 
     ckpt = tf.train.Checkpoint(decoder=decoder, optimizer=optimizer)
     ckpt_manager = tf.train.CheckpointManager(
-        ckpt, args.checkpoint_dir, max_to_keep=1)
+        ckpt, args.checkpoint_dir, max_to_keep=2)
     if ckpt_manager.latest_checkpoint:
         ckpt.restore(ckpt_manager.latest_checkpoint)
-    ckpt_manager.save()
+        print("Restoring model from {}".format(ckpt_manager.latest_checkpoint))
 
     writer = tf.summary.create_file_writer(args.logging_dir)
     tb = program.TensorBoard()
@@ -44,6 +44,14 @@ if __name__ == "__main__":
             pointer_logits, tag_logits, word_logits = decoder([
                 image, words, tf.ones(tf.shape(image)[:2]), indicators, slot, new_tag])
 
+            predicted_new_word = tf.argmax(word_logits, axis=(-1), output_type=tf.int32)
+            predicted_new_tag = tf.argmax(tag_logits, axis=(-1), output_type=tf.int32)
+            predicted_slot = tf.argmax(pointer_logits, axis=(-1), output_type=tf.int32)
+
+            pointer_accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_slot, slot), tf.float32))
+            tag_accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_new_tag, new_tag), tf.float32))
+            word_accuracy = tf.reduce_mean(tf.cast(tf.equal(predicted_new_word, new_word), tf.float32))
+
             pointer_loss = tf.reduce_mean(
                 tf.losses.sparse_categorical_crossentropy(
                     slot,
@@ -65,16 +73,19 @@ if __name__ == "__main__":
                 args.word_loss_weight * word_loss)
 
             with writer.as_default():
-                tf.summary.scalar("Pointer Loss", pointer_loss)
-                tf.summary.scalar("Tag Loss", tag_loss)
-                tf.summary.scalar("Word Loss", word_loss)
-                tf.summary.scalar("Total Loss", total_loss)
+                tf.summary.scalar("Train Pointer Accuracy", pointer_accuracy)
+                tf.summary.scalar("Train Tag Accuracy", tag_accuracy)
+                tf.summary.scalar("Train Word Accuracy", word_accuracy)
+                tf.summary.scalar("Train Pointer Loss", pointer_loss)
+                tf.summary.scalar("Train Tag Loss", tag_loss)
+                tf.summary.scalar("Train Word Loss", word_loss)
+                tf.summary.scalar("Train Total Loss", total_loss)
 
             return total_loss
 
         optimizer.minimize(loss_function, decoder.trainable_variables)
         with writer.as_default():
-            tf.summary.scalar("Images Per Second", args.batch_size / (
+            tf.summary.scalar("Train Images Per Second", args.batch_size / (
                 time.time() - start_time))
 
         if (iteration + 1) % args.checkpoint_delay == 0:
