@@ -9,6 +9,17 @@ BestFirstSample = namedtuple("BestFirstSample", [
     "words", "tags", "new_word", "new_tag", "slot"])
 
 
+def scoring_function(
+        new_candidate_word_ids,
+        new_candidate_tag_ids,
+        word_ids_weight,
+        tag_ids_weight
+):
+    return np.log(
+        new_candidate_word_ids.astype(np.float32) * word_ids_weight +
+        np.exp(new_candidate_tag_ids.astype(np.float32) * tag_ids_weight))
+
+
 def generate_samples_recursive(
         existing_word_ids,
         existing_tag_ids,
@@ -22,26 +33,38 @@ def generate_samples_recursive(
     samples = []
     if len(existing_word_ids) == 0:
         return samples
+
     for i, word in enumerate(existing_word_ids):
         new_existing_word_ids = np.append(
             existing_word_ids[:i], existing_word_ids[(i + 1):])
         new_existing_tag_ids = np.append(
             existing_tag_ids[:i], existing_tag_ids[(i + 1):])
+
         new_candidate_word_ids = np.append(
             candidate_word_ids, existing_word_ids[i:(i + 1)])
         new_candidate_tag_ids = np.append(
             candidate_tag_ids, existing_tag_ids[i:(i + 1)])
+
         new_candidate_slots = np.append(
-            np.where(i < candidate_slots, candidate_slots - 1, candidate_slots), [i])
+            np.where(i < candidate_slots,
+                     candidate_slots - 1,
+                     candidate_slots), [i])
+
         key = tuple(new_existing_word_ids)
         if key not in closed_set:
             closed_set.add(key)
-            best_index = np.argmax(np.log(
-                new_candidate_word_ids * word_ids_weight +
-                np.exp(new_candidate_tag_ids * tag_ids_weight)))
+
+            best_index = np.argmax(
+                scoring_function(
+                    new_candidate_word_ids,
+                    new_candidate_tag_ids,
+                    word_ids_weight,
+                    tag_ids_weight))
+
             best_word_id = new_candidate_word_ids[best_index]
             best_tag_id = new_candidate_tag_ids[best_index]
             best_slot = new_candidate_slots[best_index]
+
             samples.append(
                 BestFirstSample(
                     words=([2] + new_existing_word_ids.tolist() + [3]),
@@ -49,6 +72,7 @@ def generate_samples_recursive(
                     new_word=best_word_id,
                     new_tag=best_tag_id,
                     slot=best_slot))
+
             samples.extend(
                 generate_samples_recursive(
                     new_existing_word_ids,
@@ -59,6 +83,7 @@ def generate_samples_recursive(
                     word_ids_weight,
                     tag_ids_weight,
                     closed_set))
+
     return samples
 
 
@@ -77,6 +102,7 @@ def generate_samples(
         word_ids_weight,
         tag_ids_weight,
         set())
+
     samples.append(
         BestFirstSample(
             words=([2] + existing_word_ids.tolist() + [3]),
@@ -84,4 +110,5 @@ def generate_samples(
             new_word=0,
             new_tag=0,
             slot=(1 + len(existing_word_ids))))
+
     return samples

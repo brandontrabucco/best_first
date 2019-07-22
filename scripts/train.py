@@ -10,8 +10,17 @@ from best_first import load_model
 
 
 if __name__ == "__main__":
+    tf.io.gfile.makedirs(args.checkpoint_dir)
+
     vocab, parts_of_speech, decoder = load_model()
     optimizer = tf.keras.optimizers.Adam(lr=args.learning_rate)
+
+    ckpt = tf.train.Checkpoint(decoder=decoder, optimizer=optimizer)
+    ckpt_manager = tf.train.CheckpointManager(
+        ckpt, args.checkpoint_dir, max_to_keep=1)
+    if ckpt_manager.latest_checkpoint:
+        ckpt.restore(ckpt_manager.latest_checkpoint)
+    ckpt_manager.save()
 
     writer = tf.summary.create_file_writer(args.logging_dir)
     tb = program.TensorBoard()
@@ -19,6 +28,7 @@ if __name__ == "__main__":
     print("Launching tensorboard at {}".format(tb.launch()))
 
     for iteration, batch in enumerate(data_loader()):
+        tf.summary.experimental.set_step(iteration)
         start_time = time.time()
 
         image_path = batch["image_path"]
@@ -29,17 +39,6 @@ if __name__ == "__main__":
         words = batch["words"]
         tags = batch["tags"]
         indicators = batch["indicators"]
-
-        with writer.as_default():
-            tf.summary.experimental.set_step(iteration)
-            tf.summary.text("image_path", image_path[0])
-            tf.summary.text("new_word", vocab.ids_to_words(new_word[0]))
-            tf.summary.text("new_tag", parts_of_speech.ids_to_words(new_tag[0]))
-            tf.summary.text("slot", tf.as_string(slot[0]))
-            tf.summary.text("words", tf.strings.reduce_join(vocab.ids_to_words(
-                words[0, :]), separator=" "))
-            tf.summary.text("tags", tf.strings.reduce_join(parts_of_speech.ids_to_words(
-                tags[0, :]), separator=" "))
 
         def loss_function():
             pointer_logits, tag_logits, word_logits = decoder([
@@ -61,9 +60,9 @@ if __name__ == "__main__":
                     word_logits,
                     from_logits=True))
             total_loss = (
-                    args.pointer_loss_weight * pointer_loss +
-                    args.tag_loss_weight * tag_loss +
-                    args.word_loss_weight * word_loss)
+                args.pointer_loss_weight * pointer_loss +
+                args.tag_loss_weight * tag_loss +
+                args.word_loss_weight * word_loss)
 
             with writer.as_default():
                 tf.summary.scalar("Pointer Loss", pointer_loss)
@@ -77,3 +76,6 @@ if __name__ == "__main__":
         with writer.as_default():
             tf.summary.scalar("Images Per Second", args.batch_size / (
                 time.time() - start_time))
+
+        if (iteration + 1) % args.checkpoint_delay == 0:
+            ckpt_manager.save()

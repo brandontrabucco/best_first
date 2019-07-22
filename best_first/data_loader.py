@@ -25,6 +25,7 @@ def process_sequence_example(sequence_example):
             "tags": tf.io.FixedLenSequenceFeature([], dtype=tf.int64)
         }
     )
+
     image_path = context["image"]
     image = tf.numpy_function(decode_image_backend, [image_path], tf.float32)
     new_word = context["new_word"]
@@ -32,6 +33,7 @@ def process_sequence_example(sequence_example):
     slot = context["slot"]
     words = sequence["words"]
     tags = sequence["tags"]
+
     return {
         "image_path": image_path,
         "image": image,
@@ -49,6 +51,7 @@ def data_loader():
             os.path.join(args.tfrecord_folder,"0000000000000.tfrecord")):
         from best_first.backend.create_tfrecords import create_tfrecords
         create_tfrecords()
+
     record_files = tf.data.Dataset.list_files(
         os.path.join(args.tfrecord_folder, "*.tfrecord"))
     dataset = record_files.interleave(
@@ -58,6 +61,7 @@ def data_loader():
         4,
         16,
         num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
     dataset = dataset.shuffle(args.queue_size)
     dataset = dataset.repeat(args.num_epochs)
     dataset = dataset.padded_batch(args.batch_size, padded_shapes={
@@ -70,5 +74,6 @@ def data_loader():
         "tags": [None],
         "indicators": [None]
     })
+
     return dataset.apply(tf.data.experimental.prefetch_to_device(
         "/gpu:0", buffer_size=tf.data.experimental.AUTOTUNE))

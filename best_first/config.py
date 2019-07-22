@@ -45,7 +45,7 @@ image_height = 299
 image_width = 299
 
 
-batch_size = 256
+batch_size = 128
 num_epochs = 1000
 queue_size = 5096
 
@@ -68,3 +68,7 @@ dense_hidden_size = 1024
 num_layers = 10
 hidden_size = 256
 output_size = 1024
+
+
+checkpoint_dir = "ckpts/"
+checkpoint_delay = 100
