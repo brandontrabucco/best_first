@@ -48,3 +48,12 @@ parts_of_speech = [
     "VERB",
     "NOUN"
 ]
+
+word_embedding_size = 1024
+tag_embedding_size = 1024
+num_heads = 8
+attention_hidden_size = 32
+dense_hidden_size = 512
+num_layers = 3
+hidden_size = 256
+output_size = 1024

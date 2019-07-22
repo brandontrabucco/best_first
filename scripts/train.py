@@ -17,9 +17,16 @@ if __name__ == "__main__":
     parts_of_speech = load_parts_of_speech()
 
     decoder = BestFirstDecoder(
-        vocab.size().numpy(), 1024,
-        parts_of_speech.size().numpy(), 1024,
-        8, 32, 512, 3, 256, 1024)
+        vocab.size().numpy(),
+        args.word_embedding_size,
+        parts_of_speech.size().numpy(),
+        args.tag_embedding_size,
+        args.num_heads,
+        args.attention_hidden_size,
+        args.dense_hidden_size,
+        args.num_layers,
+        args.hidden_size,
+        args.output_size)
 
     optimizer = tf.keras.optimizers.Adam()
 
