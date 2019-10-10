@@ -3,13 +3,15 @@
 
 import best_first.config as args
 import tensorflow as tf
+import numpy as np
 import pickle as pkl
 import nltk
 import os
 from collections import defaultdict
 from best_first import load_tagger, load_parts_of_speech
 from best_first.vocabulary import Vocabulary
-from best_first.generate_samples import generate_samples
+from best_first.orderings.best_first_ordering import BestFirstOrdering
+from best_first.insertion import Insertion
 
 
 def process_captions():
@@ -47,6 +49,10 @@ def process_captions():
     with tf.io.gfile.GFile(args.vocab_file, "w") as f:
         f.write("\n".join(reverse_vocab))
 
+    ordering = BestFirstOrdering(
+        word_weight=1.0 / len(reverse_vocab),
+        tag_weight=1.0 / len(args.parts_of_speech),
+        max_violations=0)
     vocab = Vocabulary(reverse_vocab, unknown_word="<unk>", unknown_id=1)
     parts_of_speech = load_parts_of_speech()
     for caption_path, words, tags in zip(
@@ -58,12 +64,15 @@ def process_captions():
         for i in range(len(words)):
             word_ids = vocab.words_to_ids(tf.constant(words[i])).numpy()
             tag_ids = parts_of_speech.words_to_ids(tf.constant(tags[i])).numpy()
-            samples.extend(
-                generate_samples(
-                    word_ids,
-                    tag_ids,
-                    (1.0 / len(reverse_vocab)),
-                    (1.0 / len(args.parts_of_speech))))
+            samples.extend(ordering.expand(word_ids, tag_ids))
+            samples.append(
+                Insertion(
+                    words=np.concatenate([[2], word_ids, [3]]),
+                    tags=np.concatenate([[1], tag_ids, [1]]),
+                    next_word=0,
+                    next_tag=0,
+                    slot=1 + word_ids.size,
+                    violations=0))
 
         sample_path = os.path.join(
             args.caption_feature_folder,

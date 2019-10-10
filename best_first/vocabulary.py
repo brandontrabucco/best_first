@@ -14,17 +14,11 @@ def create_hash(
     words_to_ids_hash = tf.lookup.StaticHashTable(
         initializer=tf.lookup.KeyValueTensorInitializer(
             keys=words,
-            values=ids
-        ),
-        default_value=tf.constant(unknown_id)
-    )
+            values=ids), default_value=tf.constant(unknown_id))
     ids_to_words_hash = tf.lookup.StaticHashTable(
         initializer=tf.lookup.KeyValueTensorInitializer(
             keys=ids,
-            values=words
-        ),
-        default_value=tf.constant(unknown_word)
-    )
+            values=words), default_value=tf.constant(unknown_word))
     return words_to_ids_hash, ids_to_words_hash
 
 
@@ -39,7 +33,9 @@ class Vocabulary(object):
         self.words_to_ids_hash = words_to_ids_hash
         self.ids_to_words_hash = ids_to_words_hash
 
-    def size(self):
+    def size(
+            self
+    ):
         return self.words_to_ids_hash.size()
 
     def words_to_ids(

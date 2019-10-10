@@ -6,11 +6,10 @@ from setuptools import setup
 
 
 REQUIRED_PACKAGES = [
-    'tensorflow-gpu==2.0.0b1',
+    'tensorflow-gpu==2.0.0',
     'nltk',
     'numpy',
-    'matplotlib',
-]
+    'matplotlib']
 
 
 setup(
@@ -21,5 +20,4 @@ setup(
     packages=[
         p for p in find_packages() if p.startswith('best_first')
     ],
-    description='Best First Decoding For Image Captioning'
-)
+    description='Best First Decoding For Image Captioning')

@@ -48,40 +48,23 @@ def create_tfrecords():
                     context=tf.train.Features(
                         feature={
                             "image": tf.train.Feature(
-                                bytes_list=tf.train.BytesList(value=[bytes(image_file, "utf-8")])
-                            ),
+                                bytes_list=tf.train.BytesList(value=[bytes(image_file, "utf-8")])),
                             "new_word": tf.train.Feature(
-                                int64_list=tf.train.Int64List(value=[sample.new_word])
-                            ),
+                                int64_list=tf.train.Int64List(value=[sample.new_word])),
                             "new_tag": tf.train.Feature(
-                                int64_list=tf.train.Int64List(value=[sample.new_tag])
-                            ),
+                                int64_list=tf.train.Int64List(value=[sample.new_tag])),
                             "slot": tf.train.Feature(
-                                int64_list=tf.train.Int64List(value=[sample.slot])
-                            )
-                        }
-                    ),
+                                int64_list=tf.train.Int64List(value=[sample.slot]))}),
                     feature_lists=tf.train.FeatureLists(
                         feature_list={
                             "words": tf.train.FeatureList(
                                 feature=[
                                     tf.train.Feature(
-                                        int64_list=tf.train.Int64List(value=[w])
-                                    )
-                                    for w in sample.words
-                                ]
-                            ),
+                                        int64_list=tf.train.Int64List(value=[w])) for w in sample.words]),
                             "tags": tf.train.FeatureList(
                                 feature=[
                                     tf.train.Feature(
-                                        int64_list=tf.train.Int64List(value=[t])
-                                    )
-                                    for t in sample.tags
-                                ]
-                            ),
-                        }
-                    )
-                )
+                                        int64_list=tf.train.Int64List(value=[t])) for t in sample.tags])}))
 
                 writer.write(sequence_example.SerializeToString())
                 num_samples_so_far += 1
