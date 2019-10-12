@@ -64,7 +64,8 @@ if __name__ == "__main__":
         tags = tags.numpy().tolist()[0]
         tags = tf.constant([tags[:(slot + 1)] + [next_tag] + tags[(slot + 1):]])
 
-        print("Caption: {}".format(tf.strings.reduce_join(
-            vocab.ids_to_words(words[0]), separator=" ").numpy().decode("utf-8")))
-        print("Tags: {}".format(tf.strings.reduce_join(
-            parts_of_speech.ids_to_words(tags[0]), separator=" ").numpy().decode("utf-8")))
+        word_list = vocab.ids_to_words(words[0]).numpy().tolist()
+        word_list.insert(slot + 2, "]")
+        word_list.insert(slot + 1, "[")
+        caption = tf.strings.reduce_join(word_list, separator=" ").numpy().decode("utf-8")
+        print("Caption: {}".format(caption))
