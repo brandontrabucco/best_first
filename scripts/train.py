@@ -16,12 +16,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Train an Ordered Decoder module")
     parser.add_argument("--learning_rate", type=float, default=0.0003)
-    parser.add_argument("--logging_dir", type=str, default="./")
-    parser.add_argument("--vocab_file", type=str, default="./data/vocab.txt")
+    parser.add_argument("--tfrecord_folder", type=str, default="../data/tfrecords")
+    parser.add_argument("--logging_dir", type=str, default="../data")
+    parser.add_argument("--vocab_file", type=str, default="../data/vocab.txt")
     parser.add_argument("--word_weight", type=float, default=1.0)
     parser.add_argument("--tag_weight", type=float, default=1.0)
     parser.add_argument("--pointer_weight", type=float, default=1.0)
-    parser.add_argument("--ckpt", type=str, default="./data/model.ckpt")
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--ckpt", type=str, default="../data/model.ckpt")
     args = parser.parse_args()
 
     writer = tf.summary.create_file_writer(args.logging_dir)
@@ -29,7 +31,7 @@ if __name__ == "__main__":
     tf.io.gfile.makedirs(args.logging_dir)
     vocab = load_vocabulary(vocab_file=args.vocab_file)
     parts_of_speech = load_parts_of_speech()
-    dataset = create_dataset()
+    dataset = create_dataset(tfrecord_folder=args.tfrecord_folder, batch_size=args.batch_size)
 
     decoder_params["vocab_size"] = vocab.size()
     decoder_params["parts_of_speech_size"] = parts_of_speech.size()
@@ -39,7 +41,7 @@ if __name__ == "__main__":
     try:
         decoder.load_weights(args.ckpt)
     except NotFoundError:
-        pass
+        pass  # start from a fresh random init model
 
     for iteration, batch in enumerate(dataset):
         tf.summary.experimental.set_step(iteration)
