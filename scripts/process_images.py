@@ -7,8 +7,8 @@ import numpy as np
 import os
 
 
-def process_images():
-    print("Processing images")
+if __name__ == "__main__":
+
     tf.io.gfile.makedirs(args.image_feature_folder)
     image_model = tf.keras.applications.InceptionV3(include_top=False, weights='imagenet')
     image_features_extract_model = tf.keras.Model(

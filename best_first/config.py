@@ -24,6 +24,10 @@ min_word_frequency = 1
 max_caption_length = 13
 
 
+ordering_type = "best_first"  # can be "best_first", "random", "forward", or "backward"
+max_violations = 1
+
+
 parts_of_speech = [
     "<pad>",
     "<unk>",
