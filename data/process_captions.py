@@ -28,9 +28,10 @@ def load_captions(
         this_file_words, this_file_tags = [], []
         with tf.io.gfile.GFile(inner_path) as this_file:
             for line in this_file.readlines():
-                tokens = nltk.word_tokenize(line.strip().lower())[:max_caption_length]
-                this_file_words.append(tokens)
-                this_file_tags.append(list(zip(*tagger.tag(tokens)))[1])
+                if len(line.strip()) > 0:
+                    tokens = nltk.word_tokenize(line.strip().lower())[:max_caption_length]
+                    this_file_words.append(tokens)
+                    this_file_tags.append(list(zip(*tagger.tag(tokens)))[1])
         inner_words.append(this_file_words)
         inner_tags.append(this_file_tags)
         for this_file_line in this_file_words:

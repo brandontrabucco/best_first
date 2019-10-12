@@ -15,5 +15,4 @@ decoder_params = dict(
     attention_dropout=0.1,
     filter_size=512,
     relu_dropout=0.1,
-    layer_postprocess_dropout=0.1,
-)
+    layer_postprocess_dropout=0.1)
