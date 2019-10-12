@@ -6,7 +6,7 @@ from collections import defaultdict
 import numpy as np
 
 
-class RandomOrdering(Ordering):
+class RandomPositionOrdering(Ordering):
 
     def __init__(
             self,
@@ -20,4 +20,4 @@ class RandomOrdering(Ordering):
             words,
             tags,
     ):
-        return [self.random_state[w] for w in words]
+        return [self.random_state[i] for i, w in enumerate(words)]

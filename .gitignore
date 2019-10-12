@@ -3,8 +3,8 @@
 events.out.tfevents.**
 *.egg-info/
 ckpts/
-image_features/
-caption_features/
-tfrecords/
-tagger.pkl
-vocab.txt
+data/image_features/
+data/caption_features/
+data/tfrecords/
+data/tagger.pkl
+data/vocab.txt

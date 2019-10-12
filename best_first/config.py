@@ -4,19 +4,19 @@
 logging_dir = "./"
 
 
-image_folder = "images/"
+image_folder = "./data/images/"
 image_feature_folder = "image_features/"
 
 
-caption_folder = "captions/"
-caption_feature_folder = "caption_features/"
+caption_folder = "./data/captions/"
+caption_feature_folder = "./data/caption_features/"
 
 
-vocab_file = "vocab.txt"
-tagger_file = "tagger.pkl"
+vocab_file = "./data/vocab.txt"
+tagger_file = "./data/tagger.pkl"
 
 
-tfrecord_folder = "tfrecords/"
+tfrecord_folder = "./data/tfrecords/"
 num_samples_per_shard = 5096
 
 
@@ -74,5 +74,5 @@ hidden_size = 256
 output_size = 1024
 
 
-checkpoint_dir = "ckpts/"
+checkpoint_dir = "./data/ckpts/"
 checkpoint_delay = 100

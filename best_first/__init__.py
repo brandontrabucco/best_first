@@ -9,13 +9,9 @@ from best_first.best_first_decoder import BestFirstDecoder
 
 
 def load_vocabulary():
-    if not tf.io.gfile.exists(args.vocab_file):
-        from best_first.backend.process_captions import process_captions
-        process_captions()
     with tf.io.gfile.GFile(args.vocab_file, "r") as f:
-        reverse_vocab = f.read().strip().lower().split("\n")
         return Vocabulary(
-            reverse_vocab,
+            f.read().strip().lower().split("\n"),
             unknown_word="<unk>",
             unknown_id=1)
 
@@ -28,9 +24,6 @@ def load_parts_of_speech():
 
 
 def load_tagger():
-    if not tf.io.gfile.exists(args.tagger_file):
-        from best_first.backend.create_tagger import create_tagger
-        create_tagger()
     with tf.io.gfile.GFile(args.tagger_file, 'rb') as f:
         return pkl.loads(f.read())
 

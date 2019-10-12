@@ -10,11 +10,12 @@ import os
 from collections import defaultdict
 from best_first import load_tagger, load_parts_of_speech
 from best_first.vocabulary import Vocabulary
-from best_first.orderings.best_first_ordering import BestFirstOrdering
-from best_first.orderings.random_ordering import RandomOrdering
-from best_first.orderings.forward_ordering import ForwardOrdering
-from best_first.orderings.backward_ordering import BackwardOrdering
 from best_first.insertion import Insertion
+from best_first.orderings import BestFirstOrdering
+from best_first.orderings import RandomWordOrdering
+from best_first.orderings import RandomPositionOrdering
+from best_first.orderings import ForwardSequentialOrdering
+from best_first.orderings import BackwardSequentialOrdering
 
 
 def load_captions(
@@ -52,26 +53,36 @@ def create_vocabulary(
     return Vocabulary(reverse_vocab, unknown_word="<unk>", unknown_id=1)
 
 
+def get_ordering(
+        inner_vocab,
+        inner_parts_of_speech
+):
+    if args.ordering_type == "best_first":
+        return BestFirstOrdering(
+            word_weight=1.0 / inner_vocab.size().numpy(),
+            tag_weight=1.0 / inner_parts_of_speech.size().numpy(),
+            max_violations=args.max_violations)
+    elif args.ordering_type == "forward_sequential":
+        return ForwardSequentialOrdering(max_violations=args.max_violations)
+    elif args.ordering_type == "backward_sequential":
+        return BackwardSequentialOrdering(max_violations=args.max_violations)
+    elif args.ordering_type == "random_word":
+        return RandomWordOrdering(max_violations=args.max_violations)
+    elif args.ordering_type == "random_position":
+        return RandomPositionOrdering(max_violations=args.max_violations)
+    else:
+        return RandomWordOrdering(max_violations=args.max_violations)
+
+
 if __name__ == "__main__":
 
     tf.io.gfile.makedirs(args.caption_feature_folder)
     all_caption_files = tf.io.gfile.glob(os.path.join(args.caption_folder, "*.txt"))
     all_words, all_tags, word_frequencies = load_captions(all_caption_files)
     vocab = create_vocabulary(word_frequencies)
-
-    if args.ordering_type == "best_first":
-        ordering = BestFirstOrdering(
-            word_weight=1.0 / vocab.size().numpy(),
-            tag_weight=1.0 / len(args.parts_of_speech),
-            max_violations=args.max_violations)
-    elif args.ordering_type == "forward":
-        ordering = ForwardOrdering(max_violations=args.max_violations)
-    elif args.ordering_type == "backward":
-        ordering = BackwardOrdering(max_violations=args.max_violations)
-    else:
-        ordering = RandomOrdering(max_violations=args.max_violations)
-
     parts_of_speech = load_parts_of_speech()
+    ordering = get_ordering(vocab, parts_of_speech)
+
     for caption_path, word_examples, tag_examples in zip(
             all_caption_files, all_words, all_tags):
         samples = []
