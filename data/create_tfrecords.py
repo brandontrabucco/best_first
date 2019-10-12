@@ -1,11 +1,11 @@
 """Author: Brandon Trabucco, Copyright 2019"""
 
 
-import best_first.config as args
 import tensorflow as tf
 import pickle as pkl
 import os
 import sys
+import argparse
 
 
 def create_sequence_example(
@@ -36,6 +36,13 @@ def create_sequence_example(
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser("Create a part of speech tagger")
+    parser.add_argument("--tfrecord_folder", type=str, default="./tfrecords")
+    parser.add_argument("--caption_feature_folder", type=str, default="./caption_features")
+    parser.add_argument("--image_feature_folder", type=str, default="./image_features")
+    parser.add_argument("--num_samples_per_shard", type=int, default=5096)
+    args = parser.parse_args()
 
     tf.io.gfile.makedirs(os.path.dirname(args.tfrecord_folder))
     all_caption_files = sorted(tf.io.gfile.glob(os.path.join(
