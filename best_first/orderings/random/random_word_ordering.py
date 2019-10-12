@@ -12,6 +12,7 @@ class RandomWordOrdering(Ordering):
             self,
             max_violations=0
     ):
+        np.random.seed(0)
         self.random_state = defaultdict(lambda: np.random.uniform())
         Ordering.__init__(self, max_violations=max_violations)
 

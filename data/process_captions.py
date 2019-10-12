@@ -28,7 +28,7 @@ def load_captions(
         this_file_words, this_file_tags = [], []
         with tf.io.gfile.GFile(inner_path) as this_file:
             for line in this_file.readlines():
-                tokens = nltk.word_tokenize(line.strip().lower())[:(max_caption_length - 1)]
+                tokens = nltk.word_tokenize(line.strip().lower())[:max_caption_length]
                 this_file_words.append(tokens)
                 this_file_tags.append(list(zip(*tagger.tag(tokens)))[1])
         inner_words.append(this_file_words)
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Process captions into integer features")
     parser.add_argument("--caption_feature_folder", type=str, default="./caption_features")
     parser.add_argument("--caption_folder", type=str, default="./captions")
-    parser.add_argument("--max_caption_length", type=int, default=13)
+    parser.add_argument("--max_caption_length", type=int, default=20)
     parser.add_argument("--ordering_type", type=str, default="best_first")
     parser.add_argument("--max_violations", type=int, default=0)
     parser.add_argument("--min_word_frequency", type=int, default=1)
