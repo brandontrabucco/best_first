@@ -13,3 +13,4 @@ events.out.tfevents.**
 *.buffer**
 *.pyc**
 *.jpg**
+*.tfrecord**
