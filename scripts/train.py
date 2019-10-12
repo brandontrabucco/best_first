@@ -4,8 +4,7 @@
 import best_first.config as args
 import tensorflow as tf
 import time
-from tensorboard import program
-from best_first.data_loader import data_loader
+from best_first.dataset_utils import load_dataset
 from best_first import load_model
 
 
@@ -23,11 +22,8 @@ if __name__ == "__main__":
         print("Restoring model from {}".format(ckpt_manager.latest_checkpoint))
 
     writer = tf.summary.create_file_writer(args.logging_dir)
-    tb = program.TensorBoard()
-    tb.configure(argv=[None, '--logdir', args.logging_dir])
-    print("Launching tensorboard at {}".format(tb.launch()))
 
-    for iteration, batch in enumerate(data_loader()):
+    for iteration, batch in enumerate(load_dataset()):
         tf.summary.experimental.set_step(iteration)
         start_time = time.time()
 

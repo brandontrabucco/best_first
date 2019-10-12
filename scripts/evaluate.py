@@ -5,7 +5,7 @@ import best_first.config as args
 import tensorflow as tf
 import time
 from tensorboard import program
-from best_first.data_loader import data_loader
+from best_first.dataset_utils import data_loader
 from best_first import load_model
 
 

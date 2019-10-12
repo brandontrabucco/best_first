@@ -8,9 +8,9 @@ import nltk
 import os
 import argparse
 from collections import defaultdict
+from best_first import Insertion
 from best_first import load_tagger, load_parts_of_speech
-from best_first.vocabulary import Vocabulary
-from best_first.insertion import Insertion
+from best_first.vocabulary_utils import Vocabulary
 from best_first.orderings import BestFirstOrdering
 from best_first.orderings import RandomWordOrdering
 from best_first.orderings import RandomPositionOrdering

@@ -1,7 +1,7 @@
 """Author: Brandon Trabucco, Copyright 2019"""
 
 
-from best_first.insertion import Insertion
+from best_first.caption_utils import Insertion
 from abc import ABC, abstractmethod
 import numpy as np
 
