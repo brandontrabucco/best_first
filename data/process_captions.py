@@ -8,9 +8,9 @@ import nltk
 import os
 import argparse
 from collections import defaultdict
-from best_first import Insertion
-from best_first import load_tagger, load_parts_of_speech
-from best_first.vocabulary_utils import Vocabulary
+from best_first.caption_utils import Insertion
+from best_first.caption_utils import load_tagger, load_parts_of_speech
+from best_first.caption_utils import Vocabulary
 from best_first.orderings import BestFirstOrdering
 from best_first.orderings import RandomWordOrdering
 from best_first.orderings import RandomPositionOrdering
@@ -81,7 +81,7 @@ def get_ordering(
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser("Create a part of speech tagger")
+    parser = argparse.ArgumentParser("Process captions into integer features")
     parser.add_argument("--caption_feature_folder", type=str, default="./caption_features")
     parser.add_argument("--caption_folder", type=str, default="./captions")
     parser.add_argument("--max_caption_length", type=int, default=13)

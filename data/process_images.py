@@ -9,7 +9,7 @@ import argparse
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser("Create a part of speech tagger")
+    parser = argparse.ArgumentParser("Process images into InceptionV3 features")
     parser.add_argument("--image_feature_folder", type=str, default="./image_features")
     parser.add_argument("--image_height", type=int, default=299)
     parser.add_argument("--image_width", type=int, default=299)

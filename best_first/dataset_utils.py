@@ -18,7 +18,7 @@ def parse_sequence_example(
     context, sequence = tf.io.parse_single_sequence_example(
         sequence_example,
         context_features={
-            "image": tf.io.FixedLenFeature([], dtype=tf.string),
+            "image_path": tf.io.FixedLenFeature([], dtype=tf.string),
             "next_word": tf.io.FixedLenFeature([], dtype=tf.int64),
             "next_tag": tf.io.FixedLenFeature([], dtype=tf.int64),
             "slot": tf.io.FixedLenFeature([], dtype=tf.int64),
@@ -54,14 +54,14 @@ def create_dataset(
         tfrecord_folder="./data/tfrecords",
         shuffle_queue_size=10000,
         num_epochs=-1,
-        batch_size=256,
+        batch_size=32,
 ):
     record_files = tf.data.Dataset.list_files(os.path.join(
         tfrecord_folder, "*.tfrecord"))
     dataset = record_files.interleave(
         parse_tf_records,
         cycle_length=tf.data.experimental.AUTOTUNE,
-        block_length=tf.data.experimental.AUTOTUNE,
+        block_length=2,
         num_parallel_calls=tf.data.experimental.AUTOTUNE,)
     dataset = dataset.shuffle(shuffle_queue_size)
     dataset = dataset.repeat(num_epochs)

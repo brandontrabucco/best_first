@@ -38,7 +38,7 @@ def create_sequence_example(
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser("Create a part of speech tagger")
+    parser = argparse.ArgumentParser("Create serialized tfrecords from a dataset")
     parser.add_argument("--tfrecord_folder", type=str, default="./tfrecords")
     parser.add_argument("--caption_feature_folder", type=str, default="./caption_features")
     parser.add_argument("--image_feature_folder", type=str, default="./image_features")
@@ -69,7 +69,7 @@ if __name__ == "__main__":
                 writer = tf.io.TFRecordWriter(os.path.join(
                     args.tfrecord_folder, "{:013d}.tfrecord".format(shard)))
 
-            sequence_sample = create_sequence_example(image_file, sample)
+            sequence_sample = create_sequence_example(os.path.abspath(image_file), sample)
             writer.write(sequence_sample.SerializeToString())
             num_samples_so_far += 1
 

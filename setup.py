@@ -6,7 +6,8 @@ from setuptools import setup
 
 
 REQUIRED_PACKAGES = [
-    'tensorflow-gpu==2.0.0',
+    'tf-nightly',
+    'requests',
     'nltk',
     'numpy',
     'matplotlib']
