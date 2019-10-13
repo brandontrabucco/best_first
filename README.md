@@ -47,8 +47,8 @@ python data/create_tfrecords.py --image_feature_folder data/image_features/ --ca
 python data/process_captions.py --caption_folder data/captions/ --caption_feature_folder data/caption_features_backward_sequential_0_violations/ --ordering "backward_sequential" --max_violations 1 --min_word_frequency 5 --vocab_file data/vocab.txt --max_caption_length 20
 python data/create_tfrecords.py --image_feature_folder data/image_features/ --caption_feature_folder data/caption_features_backward_sequential_1_violations/ --tfrecord_folder data/tfrecords_backward_sequential_0_violations/ --num_samples_per_shard 4096
 
-python process_captions.py --caption_folder captions/ --caption_feature_folder caption_features_backward_sequential_2_violations/ --ordering "backward_sequential" --max_violations 2 --min_word_frequency 5 --vocab_file vocab.txt --max_caption_length 20
-python create_tfrecords.py --image_feature_folder image_features/ --caption_feature_folder caption_features_backward_sequential_2_violations/ --tfrecord_folder tfrecords_backward_sequential_2_violations/ --num_samples_per_shard 4096
+python data/process_captions.py --caption_folder data/captions/ --caption_feature_folder data/caption_features_backward_sequential_2_violations/ --ordering "backward_sequential" --max_violations 2 --min_word_frequency 5 --vocab_file data/vocab.txt --max_caption_length 20
+python data/create_tfrecords.py --image_feature_folder data/image_features/ --caption_feature_folder data/caption_features_backward_sequential_2_violations/ --tfrecord_folder data/tfrecords_backward_sequential_2_violations/ --num_samples_per_shard 4096
 
 python data/process_captions.py --caption_folder data/captions/ --caption_feature_folder data/caption_features_random_0_violations/ --ordering "random_word" --max_violations 0 --min_word_frequency 5 --vocab_file data/vocab.txt --max_caption_length 20
 python data/create_tfrecords.py --image_feature_folder data/image_features/ --caption_feature_folder data/caption_features_random_0_violations/ --tfrecord_folder data/tfrecords_backward_sequential_0_violations/ --num_samples_per_shard 4096
