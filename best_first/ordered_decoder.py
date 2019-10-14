@@ -64,9 +64,8 @@ class OrderedDecoder(tf.keras.Model):
         embedded_inputs = self.merge_layer_one(tf.concat([
             self.word_embeddings(words, mode="embedding"), 
             self.tag_embeddings(tags, mode="embedding")], -1))
-        pos_encoding = model_utils.get_position_encoding(
-            length, self.params["hidden_size"])
-        pos_encoding = tf.cast(pos_encoding, self.params["dtype"])
+        pos_encoding = tf.cast(model_utils.get_position_encoding(
+            length, self.params["hidden_size"]), self.params["dtype"])
         decoder_inputs = embedded_inputs + pos_encoding
 
         # Use the decoder to merge image and word features
@@ -75,7 +74,8 @@ class OrderedDecoder(tf.keras.Model):
         word_attention_bias = -1e9 * (
             1.0 - word_paddings[:, tf.newaxis, tf.newaxis, :])
         return self.decoder(
-            decoder_inputs, encoder_outputs, 
+            decoder_inputs, 
+            encoder_outputs, 
             word_attention_bias, image_attention_bias, training=training)
 
     def get_pointer_logits(
@@ -119,7 +119,7 @@ class OrderedDecoder(tf.keras.Model):
             training=False
     ):
         # Compute the encodings of each slot using the transformer
-        pointer_encodings = self.get_pointer_logits(
+        pointer_encodings = self.get_pointer_encodings(
             images,
             words,
             tags,
@@ -135,7 +135,7 @@ class OrderedDecoder(tf.keras.Model):
 
         # Use the slot to choose which features to use for decoding
         slot_encoding = tf.squeeze(
-            tf.gather_nd(decoder_outputs, tf.expand_dims(slot, 1), batch_dims=1), 1)
+            tf.gather(pointer_encodings, tf.expand_dims(slot, 1), batch_dims=1), 1)
 
         # Determine a next tag to decode next at this slot
         tag_logits = self.get_tag_logits(slot_encoding, training=training)
@@ -145,5 +145,5 @@ class OrderedDecoder(tf.keras.Model):
             next_tag = tf.argmax(pointer_logits, axis=(-1), output_type=tf.int32)
 
         # Determine a next word to decode next at this slot
-        word_logits = self.get_word_logits(slot_encoding, next_tag, training=training)
-        return pointer_logits, tag_logits, word_logits
+        return pointer_logits, tag_logits, self.get_word_logits(
+            slot_encoding, next_tag, training=training)

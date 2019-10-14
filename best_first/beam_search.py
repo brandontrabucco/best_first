@@ -33,11 +33,9 @@ def beam_search(
 
     # mask out elements of beams that are closed that are repeats
     open_beam_mask = 1.0 - tf.cast(
-        tf.logical_and(
-            closed[:, :, tf.newaxis], 
-            tf.concat([
-                tf.fill([batch_size, beam_size, 1], False),
-                tf.fill([batch_size, beam_size, beam_size - 1], True)], 2)), tf.float32)
+        tf.logical_and( closed[:, :, tf.newaxis],  tf.concat([
+            tf.fill([batch_size, beam_size, 1], False),
+            tf.fill([batch_size, beam_size, beam_size - 1], True)], 2)), tf.float32)
     closed_beam_bias = -1e9 * (1.0 - open_beam_mask)
 
     # perform a beam search until all beams are closed
@@ -67,7 +65,7 @@ def beam_search(
             tf.log_softmax(flat_pointer_logits), [batch_size, beam_size, length])
         pointer_log_probs, slot = tf.math.top_k(pointer_log_probs, k=beam_size)
         pointer_log_probs = (open_beam_mask * pointer_log_probs) + closed_beam_bias
-        slot_encoding = tf.gather_nd(pointer_encodings, slot, batch_dims=2)
+        slot_encoding = tf.gather(pointer_encodings, slot, batch_dims=2)
 
         # if this is the first iteration then accept all beams
         if is_first_iteration:
@@ -81,18 +79,18 @@ def beam_search(
                 log_probs[:, :, tf.newaxis] + pointer_log_probs, [batch_size, beam_size ** 2])
             log_probs, beam_indices = tf.math.top_k(log_probs, k=beam_size)
 
-            words = tf.gather_nd(
+            words = tf.gather(
                 expand_beam_dim(words), beam_indices, batch_dims=1)
-            tags = tf.gather_nd(
+            tags = tf.gather(
                 expand_beam_dim(tags), beam_indices, batch_dims=1)
-            slots = tf.gather_nd(
+            slots = tf.gather(
                 expand_beam_dim(slots), beam_indices, batch_dims=1)
-            closed = tf.gather_nd(
+            closed = tf.gather(
                 expand_beam_dim(closed), beam_indices, batch_dims=1)
 
-            slot = tf.gather_nd(
+            slot = tf.gather(
                 tf.reshape(slot, [batch_size, beam_size ** 2]), beam_indices, batch_dims=1)
-            slot_encoding = tf.gather_nd(
+            slot_encoding = tf.gather(
                 tf.reshape(slot_encoding, [
                     batch_size, beam_size ** 2, encoding_size]), beam_indices, batch_dims=1)
 
@@ -103,11 +101,9 @@ def beam_search(
 
         # mask out elements of beams that are closed that are repeats
         open_beam_mask = 1.0 - tf.cast(
-            tf.logical_and(
-                closed[:, :, tf.newaxis], 
-                tf.concat([
-                    tf.fill([batch_size, beam_size, 1], False),
-                    tf.fill([batch_size, beam_size, beam_size - 1], True)], 2)), tf.float32)
+            tf.logical_and( closed[:, :, tf.newaxis],  tf.concat([
+                tf.fill([batch_size, beam_size, 1], False),
+                tf.fill([batch_size, beam_size, beam_size - 1], True)], 2)), tf.float32)
         closed_beam_bias = -1e9 * (1.0 - open_beam_mask)
 
         """STAGE TWO: tag decoding"""
@@ -129,20 +125,20 @@ def beam_search(
             log_probs[:, :, tf.newaxis] + tag_log_probs, [batch_size, beam_size ** 2])
         log_probs, beam_indices = tf.math.top_k(log_probs, k=beam_size)
 
-        words = tf.gather_nd(
+        words = tf.gather(
             expand_beam_dim(words), beam_indices, batch_dims=1)
-        tags = tf.gather_nd(
+        tags = tf.gather(
             expand_beam_dim(tags), beam_indices, batch_dims=1)
-        slots = tf.gather_nd(
+        slots = tf.gather(
             expand_beam_dim(slots), beam_indices, batch_dims=1)
-        closed = tf.gather_nd(
+        closed = tf.gather(
             expand_beam_dim(closed), beam_indices, batch_dims=1)
 
-        slot = tf.gather_nd(
+        slot = tf.gather(
             expand_beam_dim(slot), beam_indices, batch_dims=1)
-        slot_encoding = tf.gather_nd(
+        slot_encoding = tf.gather(
             expand_beam_dim(slot_encoding), beam_indices, batch_dims=1)
-        next_tag = tf.gather_nd(
+        next_tag = tf.gather(
             tf.reshape(next_tag, [batch_size, beam_size ** 2]), beam_indices, batch_dims=1)
 
         # if the model if finished, the predicted tag should be padding (index 0)
@@ -170,24 +166,24 @@ def beam_search(
             log_probs[:, :, tf.newaxis] + word_log_probs, [batch_size, beam_size ** 2])
         log_probs, beam_indices = tf.math.top_k(log_probs, k=beam_size)
 
-        words = tf.gather_nd(
+        words = tf.gather(
             expand_beam_dim(words), beam_indices, batch_dims=1)
-        tags = tf.gather_nd(
+        tags = tf.gather(
             expand_beam_dim(tags), beam_indices, batch_dims=1)
-        slots = tf.gather_nd(
+        slots = tf.gather(
             expand_beam_dim(slots), beam_indices, batch_dims=1)
-        closed = tf.gather_nd(
+        closed = tf.gather(
             expand_beam_dim(closed), beam_indices, batch_dims=1)
 
-        slot = tf.gather_nd(
+        slot = tf.gather(
             expand_beam_dim(slot), beam_indices, batch_dims=1)
-        slot_encoding = tf.gather_nd(
+        slot_encoding = tf.gather(
             expand_beam_dim(slot_encoding), beam_indices, batch_dims=1)
-        next_tag = tf.gather_nd(
+        next_tag = tf.gather(
             expand_beam_dim(next_tag), beam_indices, batch_dims=1)
 
         # select the top k of the options
-        next_word = tf.gather_nd(
+        next_word = tf.gather(
             tf.reshape(next_word, [batch_size, beam_size ** 2]), beam_indices, batch_dims=1)
 
         # if the model if finished, the predicted word should be padding (index 0)
