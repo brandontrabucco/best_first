@@ -8,7 +8,7 @@ from official.transformer.v2 import transformer
 
 
 class OrderedDecoder(tf.keras.Model):
-
+    
     def __init__(
             self,
             params,
@@ -18,23 +18,24 @@ class OrderedDecoder(tf.keras.Model):
         self.params = params
 
         self.word_embeddings = embedding_layer.EmbeddingSharedWeights(
-            tf.cast(params["vocab_size"], tf.int32),
+            tf.cast(params["vocab_size"], tf.int32), 
             params["hidden_size"])
         self.tag_embeddings = embedding_layer.EmbeddingSharedWeights(
-            tf.cast(params["parts_of_speech_size"], tf.int32),
+            tf.cast(params["parts_of_speech_size"], tf.int32), 
             params["hidden_size"])
 
-        self.merge_layer_one = tf.keras.layers.Dense(
-            params["hidden_size"], activation=tf.nn.relu)
-        self.merge_layer_two = tf.keras.layers.Dense(
-            params["hidden_size"], activation=tf.nn.relu)
         self.image_layer = tf.keras.layers.Dense(
-            params["hidden_size"], activation=tf.nn.relu)
+            params["hidden_size"], use_bias=False)
+        self.merge_layer_one = tf.keras.layers.Dense(
+            params["hidden_size"], use_bias=False)
 
         self.encoder = transformer.EncoderStack(params)
         self.decoder = transformer.DecoderStack(params)
+
         self.pointer_layer = tf.keras.layers.Dense(
             1, activation=lambda x: tf.squeeze(x, -1))
+        self.merge_layer_two = tf.keras.layers.Dense(
+            params["hidden_size"], use_bias=False)
 
     def get_config(
             self
@@ -56,27 +57,22 @@ class OrderedDecoder(tf.keras.Model):
         images = self.image_layer(images, training=training)
         image_attention_bias = tf.zeros([batch_size, 1, 1, image_locations])
         image_attention_bias = tf.cast(image_attention_bias, self.params["dtype"])
-        image_padding = tf.zeros_like(images)
-        encoder_outputs = self.encoder(
-            images, image_attention_bias, image_padding, training=training)
+        encodings = self.encoder(
+            images, image_attention_bias, tf.zeros_like(images), training=training)
 
         # Add a positional encoding to the word embeddings
-        embedded_inputs = self.merge_layer_one(tf.concat([
-            self.word_embeddings(words, mode="embedding"), 
-            self.tag_embeddings(tags, mode="embedding")], -1))
         pos_encoding = tf.cast(model_utils.get_position_encoding(
             length, self.params["hidden_size"]), self.params["dtype"])
-        decoder_inputs = embedded_inputs + pos_encoding
+        embeddings = pos_encoding + self.merge_layer_one(tf.concat([
+            self.word_embeddings(words, mode="embedding"), 
+            self.tag_embeddings(tags, mode="embedding")], -1))
 
         # Use the decoder to merge image and word features
         if word_paddings is None:
             word_paddings = tf.cast(tf.ones_like(words), self.params["dtype"])
-        word_attention_bias = -1e9 * (
-            1.0 - word_paddings[:, tf.newaxis, tf.newaxis, :])
+        word_attention_bias = -1e9 * (1.0 - word_paddings[:, tf.newaxis, tf.newaxis, :])
         return self.decoder(
-            decoder_inputs, 
-            encoder_outputs, 
-            word_attention_bias, image_attention_bias, training=training)
+            embeddings, encodings, word_attention_bias, image_attention_bias, training=training)
 
     def get_pointer_logits(
             self,
@@ -120,11 +116,7 @@ class OrderedDecoder(tf.keras.Model):
     ):
         # Compute the encodings of each slot using the transformer
         pointer_encodings = self.get_pointer_encodings(
-            images,
-            words,
-            tags,
-            word_paddings=word_paddings,
-            training=training)
+            images, words, tags, word_paddings=word_paddings, training=training)
 
         # compute the pointer logits over slots to insert words next
         pointer_logits = self.get_pointer_logits(pointer_encodings, training=training)
