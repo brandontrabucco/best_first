@@ -43,7 +43,7 @@ if __name__ == "__main__":
             batch["image"],
             batch["words"],
             batch["tags"],
-            word_indicators=batch["indicators"],
+            word_paddings=batch["indicators"],
             training=True)
 
         pointer_loss = tf.reduce_mean(
