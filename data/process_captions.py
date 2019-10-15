@@ -20,9 +20,10 @@ from best_first.orderings import BackwardSequentialOrdering
 
 def load_captions(
         caption_files,
-        max_caption_length
+        max_caption_length,
+        tagger_file
 ):
-    tagger = load_tagger()
+    tagger = load_tagger(tagger_file=tagger_file)
     inner_words, inner_tags, inner_frequencies = [], [], defaultdict(int)
     for inner_path in caption_files:
         this_file_words, this_file_tags = [], []
@@ -90,11 +91,13 @@ if __name__ == "__main__":
     parser.add_argument("--max_violations", type=int, default=0)
     parser.add_argument("--min_word_frequency", type=int, default=1)
     parser.add_argument("--vocab_file", type=str, default="vocab.txt")
+    parser.add_argument("--tagger_file", type=str, default="tagger.pkl")
     args = parser.parse_args()
 
     tf.io.gfile.makedirs(args.caption_feature_folder)
     all_caption_files = tf.io.gfile.glob(os.path.join(args.caption_folder, "*.txt"))
-    all_words, all_tags, word_frequencies = load_captions(all_caption_files, args.max_caption_length)
+    all_words, all_tags, word_frequencies = load_captions(
+        all_caption_files, args.max_caption_length, args.tagger_file)
     vocab = create_vocabulary(word_frequencies, args.min_word_frequency, args.vocab_file)
     parts_of_speech = load_parts_of_speech()
     ordering = get_ordering(vocab, parts_of_speech, args.ordering_type, args.max_violations)
