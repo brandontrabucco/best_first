@@ -25,6 +25,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--ckpt", type=str, default="../data/model.ckpt")
     args = parser.parse_args()
+    
+    for gpu in tf.config.experimental.list_physical_devices('GPU'):
+        tf.config.experimental.set_memory_growth(gpu, True)
 
     writer = tf.summary.create_file_writer(args.logging_dir)
     tf.io.gfile.makedirs(os.path.dirname(args.ckpt))
