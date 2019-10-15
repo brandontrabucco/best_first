@@ -35,7 +35,7 @@ class OrderedDecoder(tf.keras.Model):
         self.pointer_layer = tf.keras.layers.Dense(
             1, activation=lambda x: tf.squeeze(x, -1))
         self.merge_layer_two = tf.keras.layers.Dense(
-            params["hidden_size"], activation="relu")
+            params["hidden_size"], use_bias=False)
 
     def get_config(
             self
