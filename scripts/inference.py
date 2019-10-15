@@ -61,6 +61,7 @@ if __name__ == "__main__":
 
     caption = captions[0, 0].numpy().decode("utf-8").replace(
         "<pad>", "").replace("<start>", "").replace("<end>", "").strip().split(" ")
+    original_caption = list(caption)
 
     editted_caption = []
     for slot in reversed(slots[0, 0, :-1].numpy().tolist()):
@@ -73,3 +74,20 @@ if __name__ == "__main__":
         partial_caption.insert(slot, "[")
         partial_caption.insert(slot  + 2, "]")
         print(" ".join(partial_caption))
+
+    while True:
+
+        position = int(input("\nenter a position to insert a new word:"))
+        print("inserting a new word before \"{}\"".format(original_caption[position]))
+
+        pointer_logits, tag_logits, word_logits = decoder(
+            images,
+            words[:, 0, :],
+            tags[:, 0, :],
+            slot=tf.constant([position]),
+            word_paddings=tf.where(tf.equal(words[:, 0, :], 0), 0.0, 1.0),
+            training=False)
+
+        next_word = vocab.ids_to_words(
+            tf.argmax(word_logits, axis=-1, output_type=tf.int32))[0].numpy().decode("utf-8")
+        print("would have inserted {}".format(next_word))
