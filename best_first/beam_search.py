@@ -134,7 +134,7 @@ def beam_search(
         flat_tag_logits = decoder.get_tag_logits(flat_slot_encoding, training=training)
 
         # the first iterations might have less than beam_size items available
-        max_beam_size = tf.minimum(length, beam_size)
+        max_beam_size = tf.minimum(tf.shape(flat_tag_logits)[1], beam_size)
 
         # mask out elements of beams that are closed that are repeats
         open_beam_mask = 1.0 - tf.cast(
@@ -185,13 +185,13 @@ def beam_search(
 
         # Determine a next word to decode next at this slot
         flat_slot_encoding = tf.reshape(
-            slot_encoding, [batch_size * beam_size, encoding_size])
-        flat_next_tag = tf.reshape(next_tag, [batch_size * beam_size])
+            slot_encoding, [batch_size * current_beam_size, encoding_size])
+        flat_next_tag = tf.reshape(next_tag, [batch_size * current_beam_size])
         flat_word_logits = decoder.get_word_logits(
             flat_slot_encoding, flat_next_tag, training=training)
 
         # the first iterations might have less than beam_size items available
-        max_beam_size = tf.minimum(length, beam_size)
+        max_beam_size = tf.minimum(tf.shape(flat_word_logits)[1], beam_size)
 
         # mask out elements of beams that are closed that are repeats
         open_beam_mask = 1.0 - tf.cast(
@@ -205,7 +205,7 @@ def beam_search(
             tf.nn.log_softmax(flat_word_logits), [
                 batch_size, current_beam_size, tf.shape(flat_word_logits)[1]])
         word_log_probs, next_word = tf.math.top_k(word_log_probs, k=max_beam_size)
-        word_log_probs = (word_log_probs * pointer_log_probs) + closed_beam_bias
+        word_log_probs = (open_beam_mask * word_log_probs) + closed_beam_bias
 
         # the first iterations might have less than beam_size items available
         next_max_beam_size = tf.minimum(current_beam_size * max_beam_size, beam_size)

@@ -42,7 +42,7 @@ class OrderedDecoder(tf.keras.Model):
     ):
         return {"params": self.params}
 
-    def get_pointer_encoding(
+    def get_pointer_encodings(
             self,
             images,
             words,
@@ -128,25 +128,25 @@ class OrderedDecoder(tf.keras.Model):
             slot=None,
             training=False
     ):
-        pointer_encoding = self.get_pointer_encoding(
+        pointer_encodings = self.get_pointer_encodings(
             images, words, tags, word_paddings=word_paddings, training=training)
 
         # Compute the pointer network over slots to insert the next word
         pointer_logits = self.get_pointer_logits(
-            pointer_encoding, training=training)
-        if slot is None:
-            slot = tf.argmax(pointer_logits, axis=(-1), output_type=tf.int32)
+            pointer_encodings, training=training)
 
         # Use the slot to choose which feature to use for decoding
+        if slot is None:
+            slot = tf.argmax(pointer_logits, axis=(-1), output_type=tf.int32)
         slot_encodings = tf.squeeze(
-            tf.gather(pointer_encoding, tf.expand_dims(slot, 1), batch_dims=1), 1)
+            tf.gather(pointer_encodings, tf.expand_dims(slot, 1), batch_dims=1), 1)
 
         # Determine a tag to decode next at this slot
         tag_logits = self.get_tag_logits(slot_encodings, training=training)
-        if next_tag is None:
-            next_tag = tf.argmax(tag_logits, axis=(-1))
 
         # Determine a word to decode next at this slot
+        if next_tag is None:
+            next_tag = tf.argmax(tag_logits, axis=(-1))
         word_logits = self.get_word_logits(
             slot_encodings, next_tag, training=training)
 
