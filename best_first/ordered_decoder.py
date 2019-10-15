@@ -26,7 +26,7 @@ class OrderedDecoder(tf.keras.Model):
 
         self.process_image_layer = tf.keras.layers.Dense(
             params["hidden_size"], use_bias=False)
-        self.merge_layer_one = tf.keras.layers.Dense(
+        self.merge_embeddings = tf.keras.layers.Dense(
             params["hidden_size"], use_bias=False)
 
         self.encoder = transformer.EncoderStack(params)
@@ -34,7 +34,7 @@ class OrderedDecoder(tf.keras.Model):
 
         self.pointer_layer = tf.keras.layers.Dense(
             1, activation=lambda x: tf.squeeze(x, -1))
-        self.merge_layer_two = tf.keras.layers.Dense(
+        self.un_merge_embeddings = tf.keras.layers.Dense(
             params["hidden_size"], use_bias=False)
 
     def get_config(
@@ -71,7 +71,7 @@ class OrderedDecoder(tf.keras.Model):
         pos_encoding = tf.cast(
             model_utils.get_position_encoding(
                 length, self.params["hidden_size"]), self.params["dtype"])
-        decoder_inputs = pos_encoding + self.merge_layer_one(tf.concat([
+        decoder_inputs = pos_encoding + self.merge_embeddings(tf.concat([
             self.word_embeddings(
                 words, mode="embedding", training=training),
             self.tag_embeddings(
@@ -113,7 +113,7 @@ class OrderedDecoder(tf.keras.Model):
         # Determine a word to decode next at this slot
         tag_embeddings = self.tag_embeddings(
             next_tag, mode="embedding", training=training)
-        word_inputs = self.merge_layer_two(
+        word_inputs = self.un_merge_embeddings(
             tf.concat([slot_encoding, tag_embeddings], -1), training=training)
         return self.word_embeddings(
             word_inputs[:, tf.newaxis, :], mode="linear", training=training)[:, 0, :]
