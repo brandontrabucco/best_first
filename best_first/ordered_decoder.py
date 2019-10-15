@@ -24,10 +24,10 @@ class OrderedDecoder(tf.keras.Model):
             tf.cast(params["parts_of_speech_size"], tf.int32), 
             params["hidden_size"])
 
-        self.image_layer = tf.keras.layers.Dense(
-            params["hidden_size"], activation="relu")
+        self.process_image_layer = tf.keras.layers.Dense(
+            params["hidden_size"], use_bias=False)
         self.merge_layer_one = tf.keras.layers.Dense(
-            params["hidden_size"], activation="relu")
+            params["hidden_size"], use_bias=False)
 
         self.encoder = transformer.EncoderStack(params)
         self.decoder = transformer.DecoderStack(params)
@@ -57,7 +57,7 @@ class OrderedDecoder(tf.keras.Model):
             word_paddings = tf.cast(tf.ones_like(words), self.params["dtype"])
 
         # Pass the image features [BATCH, 64, 2048] into an encoder
-        images = self.image_layer(images)
+        images = self.process_image_layer(images)
         image_attention_bias = tf.zeros([batch_size, 1, 1, image_locations])
         image_attention_bias = tf.cast(image_attention_bias, self.params["dtype"])
         image_padding = tf.zeros_like(images)

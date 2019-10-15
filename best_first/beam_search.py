@@ -43,6 +43,7 @@ def beam_search(
         images,
         decoder,
         beam_size=7,
+        max_sequence_length=20,
         training=False
 ):
     # pad the images to be the right shape for beam search
@@ -58,6 +59,8 @@ def beam_search(
     # perform a beam search until all beams are closed
     while not tf.reduce_all(closed):
         current_beam_size, length = tf.shape(log_probs)[1], tf.shape(words)[2]
+        if words.shape[2] > max_sequence_length + 2:
+            break
 
         """STAGE ONE: slot decoding"""
 

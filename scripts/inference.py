@@ -14,7 +14,7 @@ from best_first.beam_search import beam_search
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image", type=str, default="image.jpg")
+    parser.add_argument("--image", type=str, default="image.jpg", nargs="+")
     parser.add_argument("--ckpt", type=str, default="./data/model.ckpt")
     parser.add_argument("--tagger_file", type=str, default="./data/tagger.pkl")
     parser.add_argument("--vocab_file", type=str, default="./data/vocab.txt")
@@ -38,14 +38,16 @@ if __name__ == "__main__":
     image_features_extract_model = tf.keras.Model(
         image_model.input, image_model.layers[-1].output)
 
-    image = tf.keras.applications.inception_v3.preprocess_input(
-        tf.image.resize(
-            tf.image.decode_jpeg(
-                tf.io.read_file(args.image),
-                channels=3), [args.image_height, args.image_width]))
+    images = []
+    for path in args.image:
+        images.append(tf.keras.applications.inception_v3.preprocess_input(
+            tf.image.resize(
+                tf.image.decode_jpeg(
+                    tf.io.read_file(path),
+                    channels=3), [args.image_height, args.image_width])))
 
-    images = image_features_extract_model(tf.expand_dims(image, 0))
-    images = tf.reshape(images, [1, -1, images.shape[3]])
+    images = image_features_extract_model(tf.stack(images, axis=0))
+    images = tf.reshape(images, [tf.shape(images)[0], -1, images.shape[3]])
 
     words, tags, slots, log_probs = beam_search(
         images,
