@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--vocab_file", type=str, default="./data/vocab.txt")
     parser.add_argument("--image_height", type=int, default=299)
     parser.add_argument("--image_width", type=int, default=299)
-    parser.add_argument("--beam_size", type=int, default=7)
+    parser.add_argument("--beam_size", type=int, default=100)
     parser.add_argument("--max_caption_length", type=int, default=20)
     args = parser.parse_args()
 
