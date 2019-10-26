@@ -7,6 +7,8 @@ from best_first import load_parts_of_speech
 from best_first import create_dataset
 from best_first import OrderedDecoder
 from best_first import decoder_params
+from best_first.beam_search import beam_search
+from nlgeval import NLGEval
 import os
 import argparse
 
@@ -16,11 +18,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Train an Ordered Decoder module")
     parser.add_argument("--logging_dir", type=str, default="../data")
     parser.add_argument("--tfrecord_folder", type=str, default="../data/tfrecords")
+    parser.add_argument("--caption_folder", type=str, default="../data/captions")
     parser.add_argument("--vocab_file", type=str, default="../data/vocab.txt")
-    parser.add_argument("--word_weight", type=float, default=1.0)
-    parser.add_argument("--tag_weight", type=float, default=1.0)
-    parser.add_argument("--pointer_weight", type=float, default=1.0)
+    parser.add_argument("--num_images_per_eval", type=int, default=2)
     parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--beam_size", type=int, default=3)
     parser.add_argument("--ckpt", type=str, default="../data/model.ckpt")
     args = parser.parse_args()
     
@@ -39,51 +41,45 @@ if __name__ == "__main__":
     decoder = OrderedDecoder(decoder_params)
     decoder.load_weights(args.ckpt)
 
+    nlgeval = NLGEval()
+
+    reference_captions = []
+    hypothesis_captions = []
+
+
     for iteration, batch in enumerate(dataset):
         tf.summary.experimental.set_step(iteration)
 
-        pointer_logits, tag_logits, word_logits = decoder(
+        paths = [x.decode("utf-8") for x in batch["image_path"].numpy()]
+        paths = [os.path.join(args.caption_folder, os.path.basename(x)[:-7] + "txt") for x in paths]
+        for file_path in paths:
+            with tf.io.gfile.GFile(file_path, "r") as f:
+                reference_captions.append([x for x in f.read().strip().lower().split("\n") if len(x) > 0])
+        words, tags, slots, log_probs = beam_search(
             batch["image"],
-            batch["words"],
-            batch["tags"],
-            word_paddings=batch["indicators"],
-            training=True)
+            decoder,
+            beam_size=args.beam_size,
+            training=False)
 
-        pointer_loss = tf.reduce_mean(
-            tf.losses.sparse_categorical_crossentropy(
-                batch["slot"],
-                pointer_logits,
-                from_logits=True))
+        for i in range(words.shape[0]):
+            hypothesis_captions.append(tf.strings.reduce_join(
+                vocab.ids_to_words(words[i, 0, :]), separator=" ").numpy().decode("utf-8").replace(
+                    "<pad>", "").replace("<start>", "").replace("<end>", "").strip())
 
-        tag_loss = tf.reduce_mean(
-            tf.losses.sparse_categorical_crossentropy(
-                batch["next_tag"],
-                tag_logits,
-                from_logits=True))
+        if len(reference_captions) >= args.num_images_per_eval:
 
-        word_loss = tf.reduce_mean(
-            tf.losses.sparse_categorical_crossentropy(
-                batch["next_word"],
-                word_logits,
-                from_logits=True))
+            for x, y in zip(hypothesis_captions, reference_captions):
+                print("\nhypothesis: {}".format(x))
+                for z in y:
+                    print("    reference: {}".format(z))
+            metrics_dict = nlgeval.compute_metrics([*zip(*reference_captions)], hypothesis_captions)
+            reference_captions, hypothesis_captions = [], []
 
-        loss = (
-            args.pointer_weight * pointer_loss +
-            args.tag_weight * tag_loss +
-            args.word_weight * word_loss)
+            with writer.as_default():
+                print("")
+                for key in metrics_dict.keys():
+                    print(
+                        "Eval/{}".format(key), metrics_dict[key])
+                    tf.summary.scalar(
+                        "Eval/{}".format(key), metrics_dict[key])
 
-        with writer.as_default():
-            tf.summary.text(
-                "Eval/Words",
-                tf.strings.reduce_join(vocab.ids_to_words(batch["words"]), separator=" ", axis=-1)[:3])
-            tf.summary.text(
-                "Eval/Next Word",
-                vocab.ids_to_words(batch["next_word"])[:3])
-            tf.summary.text(
-                "Eval/Predicted Next Word",
-                vocab.ids_to_words(tf.argmax(word_logits, axis=-1, output_type=tf.int32))[:3])
-
-            tf.summary.scalar("Eval/Loss Pointer", pointer_loss)
-            tf.summary.scalar("Eval/Loss Tag", tag_loss)
-            tf.summary.scalar("Eval/Loss Word", word_loss)
-            tf.summary.scalar("Eval/Loss Total", loss)

@@ -62,23 +62,25 @@ if __name__ == "__main__":
     caption = captions[0, 0].numpy().decode("utf-8").replace(
         "<pad>", "").replace("<start>", "").replace("<end>", "").strip().split(" ")
     original_caption = list(caption)
+    slots = slots[0, 0, :-1].numpy().tolist()[:len(original_caption)]
 
     editted_caption = []
-    for slot in reversed(slots[0, 0, :-1].numpy().tolist()):
+    for slot in reversed(slots):
         editted_caption.append(list(caption))
         caption.pop(slot)
 
     editted_caption.reverse()
 
-    for slot, partial_caption in zip(slots[0, 0, :-1].numpy().tolist(), editted_caption):
+    for slot, partial_caption in zip(slots, editted_caption):
         partial_caption.insert(slot, "[")
-        partial_caption.insert(slot  + 2, "]")
+        partial_caption.insert(slot + 2, "]")
         print(" ".join(partial_caption))
 
     while True:
 
         position = int(input("\nenter a position to insert a new word:"))
-        print("inserting a new word before \"{}\"".format(original_caption[position]))
+        print("inserting a new word before \"{}\"".format(
+            original_caption[position]))
 
         pointer_logits, tag_logits, word_logits = decoder(
             images,
@@ -89,5 +91,8 @@ if __name__ == "__main__":
             training=False)
 
         next_word = vocab.ids_to_words(
-            tf.argmax(word_logits, axis=-1, output_type=tf.int32))[0].numpy().decode("utf-8")
+            tf.argmax(
+                word_logits,
+                axis=-1,
+                output_type=tf.int32))[0].numpy().decode("utf-8")
         print("would have inserted {}".format(next_word))
