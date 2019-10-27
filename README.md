@@ -11,10 +11,12 @@ To install our implementation, run the following:
 ```
 git clone https://github.com/brandontrabucco/best_first
 cd best_first
+
 git submodule init
 git submodule update
-pip install -e .
+
 export PYTHONPATH="$PYTHONPATH:path/to/tensorflow/models/"
+pip install -e .
 ```
 
 # Building The Dataset
