@@ -1,6 +1,6 @@
 # Non Sequential Decoding Strategies
 
-This repository implements a non sequential auto regressive model that generates captions. The model has the ability to insert new words into already generated sentences.
+This repository implements my research---a non sequential auto regressive model that generates captions. The model has the ability to insert new words into already generated sentences.
 
 # Installation
 
