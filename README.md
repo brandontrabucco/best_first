@@ -1,6 +1,6 @@
 # Non Sequential Decoding Strategies
 
-This repository implements my research---a non sequential auto regressive model that generates captions. The model has the ability to insert new words into already generated sentences.
+This repository implements my research---a non sequential auto regressive model that generates captions. The model has the ability to insert new words into already generated sentences.  Have Fun! -Brandon
 
 # Installation
 
@@ -75,5 +75,3 @@ python scripts/inference.py \
     --max_caption_length 20 \
     --model best_first_2_violations/model.ckpt
 ```
-
-Have Fun! -Brandon
