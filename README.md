@@ -74,8 +74,11 @@ To perform inference and interact with the trained model to suggest new words in
 ```
 python scripts/inference.py \
     --image image.jpg \
+    --image_height 299 \
+    --image_width 299 \
     --vocab_file data/vocab.txt \
     --tagger_file data/tagger.pkl \
     --max_caption_length 20 \
+    --beam_size 100 \
     --model best_first_2_violations/model.ckpt
 ```
