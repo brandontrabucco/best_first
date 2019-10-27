@@ -58,13 +58,13 @@ python scripts/train.py \
     --tfrecord_folder data/tfrecords_best_first_2_violations/ \
     --vocab_file data/vocab.txt \
     --logging_dir best_first_2_violations \
-    --model best_first_2_violations/model.ckpt
+    --ckpt best_first_2_violations/model.ckpt
 
 python scripts/eval.py \
     --tfrecord_folder data/tfrecords_best_first_2_violations/ \
     --vocab_file data/vocab.txt \
     --logging_dir best_first_2_violations \
-    --model best_first_2_violations/model.ckpt
+    --ckpt best_first_2_violations/model.ckpt
 ```
 
 # Running The Model
@@ -80,5 +80,5 @@ python scripts/inference.py \
     --tagger_file data/tagger.pkl \
     --max_caption_length 20 \
     --beam_size 100 \
-    --model best_first_2_violations/model.ckpt
+    --ckpt best_first_2_violations/model.ckpt
 ```
