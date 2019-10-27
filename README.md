@@ -39,7 +39,7 @@ python data/process_captions.py \
     --max_violations 2 \
     --min_word_frequency 5 \
     --vocab_file data/vocab.txt \
-    --tagger_file data/tagger.pkl\
+    --tagger_file data/tagger.pkl \
     --max_caption_length 20
 
 python data/create_tfrecords.py \
