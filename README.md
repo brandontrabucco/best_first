@@ -15,7 +15,7 @@ pip install -e .
 export PYTHONPATH="$PYTHONPATH:path/to/tensorflow/models/"
 ```
 
-# Building The Datasets
+# Building The Dataset
 
 
 To build the datasets in our experiments, place images and captions into the data folder into the corresponding `images/` and `captions/` folders. Then, run the following build scripts:
