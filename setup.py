@@ -10,7 +10,8 @@ REQUIRED_PACKAGES = [
     'requests',
     'nltk',
     'numpy',
-    'matplotlib']
+    'matplotlib',
+    'git+https://github.com/Maluuba/nlg-eval.git@master']
 
 
 setup(
@@ -18,7 +19,5 @@ setup(
     version='0.1',
     install_requires=REQUIRED_PACKAGES,
     include_package_data=True,
-    packages=[
-        p for p in find_packages() if p.startswith('best_first')
-    ],
+    packages=[p for p in find_packages() if p.startswith('best_first')],
     description='Best First Decoding For Image Captioning')
