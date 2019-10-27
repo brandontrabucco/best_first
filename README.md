@@ -69,7 +69,7 @@ To perform inference and interact with the trained model to suggest new words in
 
 ```
 python scripts/inference.py \
-    --image image.jpg\
+    --image image.jpg \
     --vocab_file data/vocab.txt \
     --tagger_file data/tagger.pkl \
     --max_caption_length 20 \
