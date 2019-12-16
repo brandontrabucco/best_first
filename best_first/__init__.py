@@ -8,11 +8,11 @@ from best_first.dataset_utils import create_dataset
 
 
 decoder_params = dict(
-    hidden_size=512,
+    hidden_size=1024,
     dtype="float32",
-    num_hidden_layers=2,
-    num_heads=8,
-    attention_dropout=0.1,
-    filter_size=512,
-    relu_dropout=0.1,
-    layer_postprocess_dropout=0.1)
+    num_hidden_layers=6,
+    num_heads=16,
+    attention_dropout=0.3,
+    filter_size=4096,
+    relu_dropout=0.3,
+    layer_postprocess_dropout=0.3)

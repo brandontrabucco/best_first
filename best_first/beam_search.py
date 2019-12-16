@@ -85,18 +85,28 @@ def beam_search(
         # the first iterations might have less than beam_size items available
         max_beam_size = tf.minimum(length, beam_size)
 
-        # mask out elements of beams that are closed that are repeats
-        open_beam_mask = 1.0 - tf.cast(
-            tf.logical_and( closed[:, :, tf.newaxis],  tf.concat([
+        # mask out elements of beams that are closed that are repeats except for one
+        closed_beam_mask = 1.0 - tf.cast(
+            tf.logical_and(closed[:, :, tf.newaxis],  tf.concat([
                 tf.fill([batch_size, current_beam_size, 1], False),
                 tf.fill([batch_size, current_beam_size, max_beam_size - 1], True)], 2)), tf.float32)
-        closed_beam_bias = -1e9 * (1.0 - open_beam_mask)
+        preserve_beam_mask = 1.0 - tf.cast(
+            tf.logical_and(closed[:, :, tf.newaxis],  tf.concat([
+                tf.fill([batch_size, current_beam_size, 1], True),
+                tf.fill([batch_size, current_beam_size, max_beam_size - 1], False)], 2)), tf.float32)
+        closed_beam_bias = -1e9 * (1.0 - closed_beam_mask)
 
         # compute the log probabilities of the top k possible pointers
         pointer_log_probs = tf.reshape(
             tf.nn.log_softmax(flat_pointer_logits), [batch_size, current_beam_size, length])
+
+        # prevent an empty beam from appearing in the result
+        pointer_log_probs = pointer_log_probs + (tf.constant([[[0.0, -1e9]]]) if tf.equal(length, 2) else 0)
+
+        # take only the top k slot locations
         pointer_log_probs, slot = tf.math.top_k(pointer_log_probs, k=max_beam_size)
-        pointer_log_probs = (open_beam_mask * pointer_log_probs) + closed_beam_bias
+        pointer_log_probs = (closed_beam_mask * pointer_log_probs) + closed_beam_bias
+        pointer_log_probs = preserve_beam_mask * pointer_log_probs
         slot_encoding = tf.gather(pointer_encodings, slot, batch_dims=2)
 
         # the first iterations might have less than beam_size items available
@@ -139,19 +149,24 @@ def beam_search(
         # the first iterations might have less than beam_size items available
         max_beam_size = tf.minimum(tf.shape(flat_tag_logits)[1], beam_size)
 
-        # mask out elements of beams that are closed that are repeats
-        open_beam_mask = 1.0 - tf.cast(
-            tf.logical_and( closed[:, :, tf.newaxis],  tf.concat([
+        # mask out elements of beams that are closed that are repeats except for one
+        closed_beam_mask = 1.0 - tf.cast(
+            tf.logical_and(closed[:, :, tf.newaxis],  tf.concat([
                 tf.fill([batch_size, current_beam_size, 1], False),
                 tf.fill([batch_size, current_beam_size, max_beam_size - 1], True)], 2)), tf.float32)
-        closed_beam_bias = -1e9 * (1.0 - open_beam_mask)
+        preserve_beam_mask = 1.0 - tf.cast(
+            tf.logical_and(closed[:, :, tf.newaxis],  tf.concat([
+                tf.fill([batch_size, current_beam_size, 1], True),
+                tf.fill([batch_size, current_beam_size, max_beam_size - 1], False)], 2)), tf.float32)
+        closed_beam_bias = -1e9 * (1.0 - closed_beam_mask)
 
         # compute the log probabilities of the top k possible tags
         tag_log_probs = tf.reshape(
             tf.nn.log_softmax(flat_tag_logits), [
                 batch_size, current_beam_size, tf.shape(flat_tag_logits)[1]])
         tag_log_probs, next_tag = tf.math.top_k(tag_log_probs, k=max_beam_size)
-        tag_log_probs = (open_beam_mask * tag_log_probs) + closed_beam_bias
+        tag_log_probs = (closed_beam_mask * tag_log_probs) + closed_beam_bias
+        tag_log_probs = preserve_beam_mask * tag_log_probs
 
         # the first iterations might have less than beam_size items available
         next_max_beam_size = tf.minimum(current_beam_size * max_beam_size, beam_size)
@@ -196,19 +211,24 @@ def beam_search(
         # the first iterations might have less than beam_size items available
         max_beam_size = tf.minimum(tf.shape(flat_word_logits)[1], beam_size)
 
-        # mask out elements of beams that are closed that are repeats
-        open_beam_mask = 1.0 - tf.cast(
-            tf.logical_and( closed[:, :, tf.newaxis],  tf.concat([
+        # mask out elements of beams that are closed that are repeats except for one
+        closed_beam_mask = 1.0 - tf.cast(
+            tf.logical_and(closed[:, :, tf.newaxis],  tf.concat([
                 tf.fill([batch_size, current_beam_size, 1], False),
                 tf.fill([batch_size, current_beam_size, max_beam_size - 1], True)], 2)), tf.float32)
-        closed_beam_bias = -1e9 * (1.0 - open_beam_mask)
+        preserve_beam_mask = 1.0 - tf.cast(
+            tf.logical_and(closed[:, :, tf.newaxis],  tf.concat([
+                tf.fill([batch_size, current_beam_size, 1], True),
+                tf.fill([batch_size, current_beam_size, max_beam_size - 1], False)], 2)), tf.float32)
+        closed_beam_bias = -1e9 * (1.0 - closed_beam_mask)
 
         # compute the log probabilities of the top k possible tags
         word_log_probs = tf.reshape(
             tf.nn.log_softmax(flat_word_logits), [
                 batch_size, current_beam_size, tf.shape(flat_word_logits)[1]])
         word_log_probs, next_word = tf.math.top_k(word_log_probs, k=max_beam_size)
-        word_log_probs = (open_beam_mask * word_log_probs) + closed_beam_bias
+        word_log_probs = (closed_beam_mask * word_log_probs) + closed_beam_bias
+        word_log_probs = preserve_beam_mask * word_log_probs
 
         # the first iterations might have less than beam_size items available
         next_max_beam_size = tf.minimum(current_beam_size * max_beam_size, beam_size)

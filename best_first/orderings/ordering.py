@@ -72,7 +72,7 @@ class Ordering(ABC):
                         np.append(tags[:i], tags[i + 1:]),
                         np.concatenate([left_words[:split], [word], left_words[split:]]),
                         np.concatenate([left_tags[:split], [tag], left_tags[split:]]),
-                        np.concatenate([slots[:split], [i], slots[split:] + 1]),
+                        np.concatenate([slots[:split], [i], slots[split:] - 1]),
                         order_violations,
                         closed))
 

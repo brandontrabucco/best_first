@@ -6,12 +6,11 @@ from setuptools import setup
 
 
 REQUIRED_PACKAGES = [
-    'tf-nightly',
+    'tf-nightly-gpu',
     'requests',
     'nltk',
     'numpy',
-    'matplotlib',
-    'git+https://github.com/Maluuba/nlg-eval.git@master']
+    'matplotlib']
 
 
 setup(

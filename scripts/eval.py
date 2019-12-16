@@ -46,7 +46,6 @@ if __name__ == "__main__":
     reference_captions = []
     hypothesis_captions = []
 
-
     for iteration, batch in enumerate(dataset):
         tf.summary.experimental.set_step(iteration)
 
@@ -55,6 +54,7 @@ if __name__ == "__main__":
         for file_path in paths:
             with tf.io.gfile.GFile(file_path, "r") as f:
                 reference_captions.append([x for x in f.read().strip().lower().split("\n") if len(x) > 0])
+
         words, tags, slots, log_probs = beam_search(
             batch["image"],
             decoder,

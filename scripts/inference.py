@@ -54,10 +54,18 @@ if __name__ == "__main__":
         images,
         decoder,
         beam_size=args.beam_size,
+        max_sequence_length=args.max_caption_length,
         training=False)
 
     captions = tf.strings.reduce_join(
         vocab.ids_to_words(words), separator=" ", axis=(-1))
+
+    for b in range(args.beam_size):
+        print("Beam #{} Log Probability = {:0.2f}: {}".format(
+            b,
+            log_probs[0, b].numpy(),
+            captions[0, b].numpy().decode("utf-8").replace(
+                "<pad>", "").replace("<start>", "").replace("<end>", "").strip()))
 
     caption = captions[0, 0].numpy().decode("utf-8").replace(
         "<pad>", "").replace("<start>", "").replace("<end>", "").strip().split(" ")
@@ -70,6 +78,8 @@ if __name__ == "__main__":
         caption.pop(slot)
 
     editted_caption.reverse()
+
+    print("\nDecoding Best Candidate:")
 
     for slot, partial_caption in zip(slots, editted_caption):
         partial_caption.insert(slot, "[")

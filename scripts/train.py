@@ -15,7 +15,7 @@ import argparse
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("Train an Ordered Decoder module")
-    parser.add_argument("--learning_rate", type=float, default=0.0003)
+    parser.add_argument("--learning_rate", type=float, default=0.00001)
     parser.add_argument("--tfrecord_folder", type=str, default="../data/tfrecords")
     parser.add_argument("--logging_dir", type=str, default="../data")
     parser.add_argument("--vocab_file", type=str, default="../data/vocab.txt")
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--pointer_weight", type=float, default=1.0)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--ckpt", type=str, default="../data/model.ckpt")
+    parser.add_argument("--start_iteration", type=int, default=0)
     args = parser.parse_args()
     
     for gpu in tf.config.experimental.list_physical_devices('GPU'):
@@ -47,6 +48,7 @@ if __name__ == "__main__":
         pass  # start from a fresh random init model
 
     for iteration, batch in enumerate(dataset):
+        iteration = iteration + args.start_iteration
         tf.summary.experimental.set_step(iteration)
 
         with tf.GradientTape() as tape:
