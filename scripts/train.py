@@ -103,5 +103,5 @@ if __name__ == "__main__":
             optimizer.apply_gradients(zip(tape.gradient(
                 loss, decoder.trainable_variables), decoder.trainable_variables))
 
-        if iteration % 100 == 0:
+        if iteration % 1000 == 0:
             decoder.save_weights(args.ckpt)

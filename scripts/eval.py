@@ -43,8 +43,8 @@ if __name__ == "__main__":
 
     nlgeval = NLGEval()
 
-    reference_captions = []
-    hypothesis_captions = []
+    reference_captions = {}
+    hypothesis_captions = {}
 
     for iteration, batch in enumerate(dataset):
         tf.summary.experimental.set_step(iteration)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         paths = [os.path.join(args.caption_folder, os.path.basename(x)[:-7] + "txt") for x in paths]
         for file_path in paths:
             with tf.io.gfile.GFile(file_path, "r") as f:
-                reference_captions.append([x for x in f.read().strip().lower().split("\n") if len(x) > 0])
+                reference_captions[file_path] = [x for x in f.read().strip().lower().split("\n") if len(x) > 0]
 
         words, tags, slots, log_probs = beam_search(
             batch["image"],
@@ -62,13 +62,14 @@ if __name__ == "__main__":
             training=False)
 
         for i in range(words.shape[0]):
-            hypothesis_captions.append(tf.strings.reduce_join(
+            hypothesis_captions[paths[i]] = tf.strings.reduce_join(
                 vocab.ids_to_words(words[i, 0, :]), separator=" ").numpy().decode("utf-8").replace(
-                    "<pad>", "").replace("<start>", "").replace("<end>", "").strip())
+                    "<pad>", "").replace("<start>", "").replace("<end>", "").strip()
 
-        if len(reference_captions) >= args.num_images_per_eval:
+        if len(reference_captions.keys()) >= args.num_images_per_eval:
 
-            for x, y in zip(hypothesis_captions, reference_captions):
+            for key in hypothesis_captions.keys():
+                x, y = hypothesis_captions[key], reference_captions[key]
                 print("\nhypothesis: {}".format(x))
                 for z in y:
                     print("    reference: {}".format(z))
